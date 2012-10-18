@@ -39,6 +39,10 @@
       <url>http://repo.jenkins-ci.org/public/</url>
     </pluginRepository>
   </pluginRepositories>
+  
+  <properties>
+    <powermock.version>1.4.12</powermock.version>
+  </properties>
 
   <dependencies>
     <dependency>
@@ -50,20 +54,32 @@
     <dependency>
       <groupId>org.powermock</groupId>
       <artifactId>powermock-core</artifactId>
-      <version>1.4.12</version>
+      <version>${powermock.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.powermock</groupId>
       <artifactId>powermock-module-junit4</artifactId>
-      <version>1.4.12</version>
+      <version>${powermock.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-module-junit4-rule</artifactId>
+      <version>${powermock.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.powermock</groupId>
       <artifactId>powermock-api-mockito</artifactId>
-      <version>1.4.12</version>
+      <version>${powermock.version}</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.powermock</groupId>
+        <artifactId>powermock-classloading-objenesis</artifactId>
+        <version>${powermock.version}</version>
+        <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.hamcrest</groupId>
