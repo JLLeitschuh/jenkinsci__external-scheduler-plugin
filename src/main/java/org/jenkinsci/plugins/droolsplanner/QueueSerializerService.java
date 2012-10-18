@@ -26,32 +26,60 @@ package org.jenkinsci.plugins.droolsplanner;
 import hudson.model.Node;
 import hudson.model.Queue;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import net.sf.json.util.JSONBuilder;
-import net.sf.json.util.JSONStringer;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONStringer;
+import org.json.JSONWriter;
 
 public final class QueueSerializerService {
 
-    public String serialize(final List<Queue.Item> queue) {
+    public String serialize(final List<Queue.Item> queue, final Map<Integer, String> assignments) {
 
         final JSONStringer stringer = new JSONStringer();
-        final Serializer serializer = new Serializer(stringer);
+        final Serializer serializer = new Serializer(stringer, assignments);
 
-        return serializer.run(queue).toString();
+        try {
+
+            return serializer.run(queue).toString();
+        } catch (JSONException e) {
+
+            throw new AssertionError("Checked exception thrown for a programmer error");
+        }
+    }
+
+    public Map<Integer, String> deserialize(final String queue) throws JSONException {
+
+        final JSONArray items = new JSONObject(queue).getJSONArray("solution");
+
+        final Map<Integer, String> assignments = new HashMap<Integer, String>(items.length());
+        for(int i = 0; i < items.length(); i++) {
+
+          JSONObject item = items.getJSONObject(i);
+
+          assignments.put(item.getInt("id"), item.getString("node"));
+        }
+
+        return assignments;
     }
 
     private static final class Serializer {
 
-        private final JSONBuilder builder;
+        private final JSONStringer builder;
+        private final Map<Integer, String> assignments;
 
-        public Serializer(final JSONBuilder builder) {
+        public Serializer(final JSONStringer builder, final Map<Integer, String> assignments) {
 
             this.builder = builder;
+            this.assignments = assignments;
         }
 
-        public JSONBuilder run(final List<Queue.Item> queue) {
+        public JSONWriter run(final List<Queue.Item> queue) throws JSONException {
 
             builder.object().key("queue").array();
 
@@ -60,7 +88,7 @@ public final class QueueSerializerService {
             return builder.endArray().endObject();
         }
 
-        private void queue(final List<Queue.Item> queue) {
+        private void queue(final List<Queue.Item> queue) throws JSONException {
 
             if (queue == null) return;
 
@@ -79,6 +107,8 @@ public final class QueueSerializerService {
 
                 builder.endArray();
 
+                builder.key("assigned").value(assignments.get(item.id));
+
                 builder.endObject();
             }
         }
@@ -92,7 +122,7 @@ public final class QueueSerializerService {
             return 50;
         }
 
-        private void nodes(final Queue.Item item) {
+        private void nodes(final Queue.Item item) throws JSONException {
 
             final Set<Node> nodes = item.getAssignedLabel().getNodes();
             for (final Node node: nodes) {
@@ -106,10 +136,5 @@ public final class QueueSerializerService {
                 builder.endObject();
             }
         }
-    }
-
-    public List<Queue.Item> deserialize(final String queue) {
-
-        return null;
     }
 }

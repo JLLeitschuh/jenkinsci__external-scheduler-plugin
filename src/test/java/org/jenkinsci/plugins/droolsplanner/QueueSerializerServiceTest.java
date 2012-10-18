@@ -33,10 +33,13 @@ import hudson.model.queue.CauseOfBlockage;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import org.json.JSONException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -50,32 +53,82 @@ public class QueueSerializerServiceTest {
 
     private static final QueueSerializerService SERIALIZER = new QueueSerializerService();
 
-    private static List<Queue.Item> singleItem() {
+    final Map<Integer, String> assignments = new HashMap<Integer, String>();
+
+    @Test
+    public void deserializeSingleItem() throws JSONException {
+
+        final String json = "{\"solution\" : [ { \"id\" : 1, \"name\" : \"job@1\", \"node\" : \"vmg77-Win2k3-x86_64\" }," +
+        		"{ \"id\" : 2, \"name\" : \"job@2\", \"node\" : \"not-assigned\" } ] }"
+        ;
+
+        final Map<Integer, String> assignments = SERIALIZER.deserialize(json);
+
+        assertEquals(2, assignments.size());
+        assertEquals("vmg77-Win2k3-x86_64", assignments.get(1));
+        assertEquals("not-assigned", assignments.get(2));
+    }
+
+    @Test
+    public void serializeSingleItem() {
+
+        final String actual = SERIALIZER.serialize(singleItem(), assignments);
+
+        final String json = "{\"queue\":[{\"id\":2,\"priority\":50,\"inQueueSince\":3,\"name\":\"Single queue item\"," +
+    		"\"nodes\":[{\"name\":\"master\",\"executors\":2,\"freeExecutors\":1}],\"assigned\":null}]}";
+
+        assertEquals(json, actual);
+    }
+
+    private List<Queue.Item> singleItem() {
 
         final List<Queue.Item> items = new ArrayList<Queue.Item>(1);
         final Set<Node> nodes = new HashSet<Node>(1);
 
         nodes.add(node("master", 2, 1));
 
-        final Queue.Item item = item(nodes, 2, "Single queue item", 3);
-
-        items.add(item);
+        items.add(item(nodes, 2, "Single queue item", 3));
 
         return items;
     }
 
     @Test
-    public void serialize() {
+    public void serializeSeveralItems() {
 
-      final String json = "{\"queue\":[{\"id\":2,\"priority\":50,\"inQueueSince\":3,\"name\":\"Single queue item\",\"nodes\":[{\"name\":\"master\",\"executors\":2,\"freeExecutors\":1}]}]}";
+        final Map<Integer, String> assignments = new HashMap<Integer, String>();
+        assignments.put(4, "slave2");
 
-      final String actual = SERIALIZER.serialize(singleItem());
+        final String actual = SERIALIZER.serialize(severalItems(), assignments);
 
-      assertEquals(json, actual);
+        final String json = "{\"queue\":[{\"id\":2,\"priority\":50,\"inQueueSince\":3,\"name\":\"Single queue item\"," +
+              "\"nodes\":[{\"name\":\"master\",\"executors\":2,\"freeExecutors\":1}],\"assigned\":null}," +
+              "{\"id\":4,\"priority\":70,\"inQueueSince\":5,\"name\":\"raven_eap\"," +
+              "\"nodes\":[{\"name\":\"slave1\",\"executors\":7,\"freeExecutors\":7},{\"name\":\"slave2\",\"executors\":1,\"freeExecutors\":0}],\"assigned\":\"slave2\"}" +
+              "]}";
+
+        assertEquals(json, actual);
     }
 
+    private List<Queue.Item> severalItems() {
 
-    private static Node node(final String name, final int executors, final int freeExecutors) {
+        final List<Queue.Item> items = new ArrayList<Queue.Item>(1);
+        Set<Node> nodes = new HashSet<Node>(1);
+
+        nodes.add(node("master", 2, 1));
+
+        items.add(item(nodes, 2, "Single queue item", 3));
+
+        nodes = new HashSet<Node>(1);
+
+        nodes.add(node("slave1", 7, 7));
+        nodes.add(node("slave2", 1, 0));
+
+        items.add(item(nodes, 4, "raven_eap", 5));
+
+        return items;
+    }
+
+    private Node node(final String name, final int executors, final int freeExecutors) {
 
         final Computer computer = Mockito.mock(Computer.class);
         final Node node = PowerMockito.mock(Node.class);
@@ -89,7 +142,7 @@ public class QueueSerializerServiceTest {
         return node;
     }
 
-    private static Queue.Item item(
+    private Queue.Item item(
             final Set<Node> nodes, int id, String displayName, int inQueueSince
     ) {
 
