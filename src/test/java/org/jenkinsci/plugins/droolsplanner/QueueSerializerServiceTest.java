@@ -33,13 +33,15 @@ import hudson.model.queue.CauseOfBlockage;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
-import org.json.JSONException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -56,26 +58,27 @@ public class QueueSerializerServiceTest {
     final Map<Integer, String> assignments = new HashMap<Integer, String>();
 
     @Test
-    public void deserializeSingleItem() throws JSONException {
+    public void deserializeSingleItem() {
 
         final String json = "{\"solution\" : [ { \"id\" : 1, \"name\" : \"job@1\", \"node\" : \"vmg77-Win2k3-x86_64\" }," +
         		"{ \"id\" : 2, \"name\" : \"job@2\", \"node\" : \"not-assigned\" } ] }"
         ;
 
-        final Map<Integer, String> assignments = SERIALIZER.deserialize(json);
+        final NodeAssignements assignments = SERIALIZER.deserialize(json);
 
         assertEquals(2, assignments.size());
-        assertEquals("vmg77-Win2k3-x86_64", assignments.get(1));
-        assertEquals("not-assigned", assignments.get(2));
+        assertEquals("vmg77-Win2k3-x86_64", assignments.taskNodeName(1));
+        assertEquals("not-assigned", assignments.taskNodeName(2));
     }
 
     @Test
     public void serializeSingleItem() {
 
-        final String actual = SERIALIZER.serialize(singleItem(), assignments);
+        final String actual = SERIALIZER.serialize(singleItem(), NodeAssignements.builder().build());
 
         final String json = "{\"queue\":[{\"id\":2,\"priority\":50,\"inQueueSince\":3,\"name\":\"Single queue item\"," +
-    		"\"nodes\":[{\"name\":\"master\",\"executors\":2,\"freeExecutors\":1}],\"assigned\":null}]}";
+    		    "\"nodes\":[{\"name\":\"master\",\"executors\":2,\"freeExecutors\":1}],\"assigned\":null}]}"
+        ;
 
         assertEquals(json, actual);
     }
@@ -95,16 +98,19 @@ public class QueueSerializerServiceTest {
     @Test
     public void serializeSeveralItems() {
 
-        final Map<Integer, String> assignments = new HashMap<Integer, String>();
-        assignments.put(4, "slave2");
-
-        final String actual = SERIALIZER.serialize(severalItems(), assignments);
+        final String actual = SERIALIZER.serialize(
+                severalItems(),
+                NodeAssignements.builder()
+                        .assign(4, "slave2")
+                        .build()
+        );
 
         final String json = "{\"queue\":[{\"id\":2,\"priority\":50,\"inQueueSince\":3,\"name\":\"Single queue item\"," +
-              "\"nodes\":[{\"name\":\"master\",\"executors\":2,\"freeExecutors\":1}],\"assigned\":null}," +
-              "{\"id\":4,\"priority\":70,\"inQueueSince\":5,\"name\":\"raven_eap\"," +
-              "\"nodes\":[{\"name\":\"slave1\",\"executors\":7,\"freeExecutors\":7},{\"name\":\"slave2\",\"executors\":1,\"freeExecutors\":0}],\"assigned\":\"slave2\"}" +
-              "]}";
+                "\"nodes\":[{\"name\":\"master\",\"executors\":2,\"freeExecutors\":1}],\"assigned\":null}," +
+                "{\"id\":4,\"priority\":70,\"inQueueSince\":5,\"name\":\"raven_eap\"," +
+                "\"nodes\":[{\"name\":\"slave1\",\"executors\":7,\"freeExecutors\":7},{\"name\":\"slave2\",\"executors\":1,\"freeExecutors\":0}]" +
+                ",\"assigned\":\"slave2\"}]}"
+        ;
 
         assertEquals(json, actual);
     }
@@ -112,13 +118,14 @@ public class QueueSerializerServiceTest {
     private List<Queue.Item> severalItems() {
 
         final List<Queue.Item> items = new ArrayList<Queue.Item>(1);
-        Set<Node> nodes = new HashSet<Node>(1);
+
+        SortedSet<Node> nodes = nodeList();
 
         nodes.add(node("master", 2, 1));
 
         items.add(item(nodes, 2, "Single queue item", 3));
 
-        nodes = new HashSet<Node>(1);
+        nodes = nodeList();
 
         nodes.add(node("slave1", 7, 7));
         nodes.add(node("slave2", 1, 0));
@@ -126,6 +133,20 @@ public class QueueSerializerServiceTest {
         items.add(item(nodes, 4, "raven_eap", 5));
 
         return items;
+    }
+
+    /**
+     * Use sorted set simplify checking
+     */
+    private SortedSet<Node> nodeList () {
+
+        return new TreeSet<Node>(new Comparator<Node>() {
+
+            public int compare(Node o1, Node o2) {
+System.out.println(o1.getDisplayName().compareTo(o2.getDisplayName()));
+                return o1.getDisplayName().compareTo(o2.getDisplayName());
+            }
+        });
     }
 
     private Node node(final String name, final int executors, final int freeExecutors) {

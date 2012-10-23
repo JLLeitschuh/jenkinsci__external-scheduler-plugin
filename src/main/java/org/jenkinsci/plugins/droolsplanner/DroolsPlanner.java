@@ -26,15 +26,11 @@ package org.jenkinsci.plugins.droolsplanner;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
-import hudson.model.Node;
 import hudson.util.FormValidation;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 import net.sf.json.JSONObject;
 
@@ -46,66 +42,6 @@ import org.kohsuke.stapler.StaplerRequest;
  *
  */
 public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> {
-
-
-
-    /**
-     * Class to represent Task assignment
-     *
-     * @author ogondza
-     */
-    public static final class NodeAssignements {
-
-        private final Map<Integer, String> assignments;
-
-        public NodeAssignements(final Map<Integer, String> assignments) {
-
-            this.assignments = Collections.unmodifiableMap(assignments);
-        }
-    }
-
-    /**
-     * Class to represent possible assignment to the particular Node
-     *
-     * @author ogondza
-     */
-    public static final class NodeAssignment {
-
-        private static final String NOT_ASSIGNED = "not assigned";
-        private final Node node;
-
-        public static NodeAssignment fromString(final List<Node> existingNodes, final String name) {
-
-            if (name == null) throw new IllegalArgumentException("No name");
-
-            if (name.equals(NOT_ASSIGNED)) return new NodeAssignment(null);
-
-            for (final Node node: existingNodes) {
-
-                if (name.equals(node.getDisplayName())) return new NodeAssignment(node);
-            }
-
-            throw new AssertionError("unknown node");
-        }
-
-        public NodeAssignment(final Node node) {
-
-            this.node = node;
-        }
-
-        public boolean isAssigned() {
-
-            return node != null;
-        }
-
-        public String toString() {
-
-            return node == null
-                    ? NOT_ASSIGNED
-                    : node.getDisplayName()
-            ;
-        }
-    }
 
     @Extension
     public static final class DescriptorImpl extends Descriptor<DroolsPlanner> {
