@@ -24,28 +24,16 @@
 package org.jenkinsci.plugins.droolsplanner;
 
 import static org.junit.Assert.assertEquals;
-import hudson.model.Action;
-import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.Queue;
-import hudson.model.labels.LabelAtom;
-import hudson.model.queue.CauseOfBlockage;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.TreeSet;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -55,7 +43,9 @@ public class QueueSerializerServiceTest {
 
     private static final QueueSerializerService SERIALIZER = new QueueSerializerService();
 
-    final Map<Integer, String> assignments = new HashMap<Integer, String>();
+    private final NodeMockFactory nodeFactory = new NodeMockFactory();
+
+    private final List<Node> nodes = new ArrayList<Node>();
 
     @Test
     public void deserializeSingleItem() {
@@ -64,17 +54,20 @@ public class QueueSerializerServiceTest {
         		"{ \"id\" : 2, \"name\" : \"job@2\", \"node\" : \"not-assigned\" } ] }"
         ;
 
-        final NodeAssignements assignments = SERIALIZER.deserialize(json);
+        final NodeAssignments assignments = SERIALIZER.deserialize(json);
 
         assertEquals(2, assignments.size());
-        assertEquals("vmg77-Win2k3-x86_64", assignments.taskNodeName(1));
-        assertEquals("not-assigned", assignments.taskNodeName(2));
+        assertEquals("vmg77-Win2k3-x86_64", assignments.nodeName(1));
+        assertEquals("not-assigned", assignments.nodeName(2));
     }
 
     @Test
     public void serializeSingleItem() {
 
-        final String actual = SERIALIZER.serialize(singleItem(), NodeAssignements.builder().build());
+        final String actual = SERIALIZER.serialize(
+                new StateProviderMock(singleItem(), nodes),
+                NodeAssignments.empty()
+        );
 
         final String json = "{\"queue\":[{\"id\":2,\"priority\":50,\"inQueueSince\":3,\"name\":\"Single queue item\"," +
     		    "\"nodes\":[{\"name\":\"master\",\"executors\":2,\"freeExecutors\":1}],\"assigned\":null}]}"
@@ -86,11 +79,11 @@ public class QueueSerializerServiceTest {
     private List<Queue.Item> singleItem() {
 
         final List<Queue.Item> items = new ArrayList<Queue.Item>(1);
-        final Set<Node> nodes = new HashSet<Node>(1);
+        final Set<Node> nodes = nodeFactory.set();
 
-        nodes.add(node("master", 2, 1));
+        nodes.add(nodeFactory.node("master", 2, 1));
 
-        items.add(item(nodes, 2, "Single queue item", 3));
+        items.add(ItemMock.create(nodes, 2, "Single queue item", 3));
 
         return items;
     }
@@ -99,8 +92,8 @@ public class QueueSerializerServiceTest {
     public void serializeSeveralItems() {
 
         final String actual = SERIALIZER.serialize(
-                severalItems(),
-                NodeAssignements.builder()
+                new StateProviderMock(severalItems(), nodes),
+                NodeAssignments.builder()
                         .assign(4, "slave2")
                         .build()
         );
@@ -119,87 +112,46 @@ public class QueueSerializerServiceTest {
 
         final List<Queue.Item> items = new ArrayList<Queue.Item>(1);
 
-        SortedSet<Node> nodes = nodeList();
+        SortedSet<Node> nodes = nodeFactory.set();
 
-        nodes.add(node("master", 2, 1));
+        nodes.add(nodeFactory.node("master", 2, 1));
 
-        items.add(item(nodes, 2, "Single queue item", 3));
+        items.add(ItemMock.create(nodes, 2, "Single queue item", 3));
 
-        nodes = nodeList();
+        nodes = nodeFactory.set();
 
-        nodes.add(node("slave1", 7, 7));
-        nodes.add(node("slave2", 1, 0));
+        nodes.add(nodeFactory.node("slave1", 7, 7));
+        nodes.add(nodeFactory.node("slave2", 1, 0));
 
-        items.add(item(nodes, 4, "raven_eap", 5));
+        items.add(ItemMock.create(nodes, 4, "raven_eap", 5));
 
         return items;
     }
 
-    /**
-     * Use sorted set simplify checking
-     */
-    private SortedSet<Node> nodeList () {
+    @Test
+    public void serializeUnlabeledItem() {
 
-        return new TreeSet<Node>(new Comparator<Node>() {
+        nodes.add(nodeFactory.node("slave_2:1", 2, 1));
+        nodes.add(nodeFactory.node("slave_1:2", 1, 2));
 
-            public int compare(Node o1, Node o2) {
-System.out.println(o1.getDisplayName().compareTo(o2.getDisplayName()));
-                return o1.getDisplayName().compareTo(o2.getDisplayName());
-            }
-        });
+        final String actual = SERIALIZER.serialize(
+                new StateProviderMock(unlabeledItem(), nodes),
+                NodeAssignments.empty()
+        );
+
+        final String json = "{\"queue\":[{\"id\":2,\"priority\":50,\"inQueueSince\":3,\"name\":\"Unlabeled item\"," +
+                "\"nodes\":[{\"name\":\"slave_2:1\",\"executors\":2,\"freeExecutors\":1},{\"name\":\"slave_1:2\",\"executors\":1,\"freeExecutors\":2}],\"assigned\":null}]}"
+        ;
+
+        assertEquals(json, actual);
     }
 
-    private Node node(final String name, final int executors, final int freeExecutors) {
+    private List<Queue.Item> unlabeledItem() {
 
-        final Computer computer = Mockito.mock(Computer.class);
-        final Node node = PowerMockito.mock(Node.class);
+        final List<Queue.Item> items = new ArrayList<Queue.Item>(1);
 
-        PowerMockito.when(node.getDisplayName()).thenReturn(name);
-        PowerMockito.when(node.getNumExecutors()).thenReturn(executors);
-        PowerMockito.when(node.toComputer()).thenReturn(computer);
+        items.add(ItemMock.create(null, 2, "Unlabeled item", 3));
 
-        PowerMockito.when(computer.countIdle()).thenReturn(freeExecutors);
-
-        return node;
-    }
-
-    private Queue.Item item(
-            final Set<Node> nodes, int id, String displayName, int inQueueSince
-    ) {
-
-        final Queue.Task task = Mockito.mock(Queue.Task.class);
-
-        Mockito.when(task.getDisplayName()).thenReturn(displayName);
-
-        return new ItemMock(task, nodes, id, inQueueSince);
-    }
-
-    private static class ItemMock extends Queue.Item {
-
-        private final Set<Node> nodes;
-
-        public ItemMock(Queue.Task task, Set<Node> nodes, int id, int inQueueSince) {
-
-            super(task, Collections.<Action>emptyList(), id, null, inQueueSince);
-
-            this.nodes= nodes;
-        }
-
-        @Override
-        public CauseOfBlockage getCauseOfBlockage() {
-
-            throw new AssertionError("Noone is supposed to to call that");
-        }
-
-        public LabelAtom getAssignedLabel() {
-
-            return new LabelAtom ("Label name") {
-                @Override
-                public Set<Node> getNodes() {
-
-                    return nodes;
-                }
-            };
-        }
+        return items;
     }
 }

@@ -23,9 +23,11 @@
  */
 package org.jenkinsci.plugins.droolsplanner;
 
+import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.Queue;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -34,14 +36,18 @@ import net.sf.json.JSONObject;
 import net.sf.json.util.JSONBuilder;
 import net.sf.json.util.JSONStringer;
 
-
 public final class QueueSerializerService {
 
-    public NodeAssignements deserialize(final String queue) {
+    public int getScore(final String score) {
 
-        final JSONArray items = JSONObject.fromObject(queue).getJSONArray("solution");
+        return JSONObject.fromObject(score).getInt("score");
+    }
 
-        final NodeAssignements.Builder builder = NodeAssignements.builder();
+    public NodeAssignments deserialize(final String solution) {
+
+        final JSONArray items = JSONObject.fromObject(solution).getJSONArray("solution");
+
+        final NodeAssignments.Builder builder = NodeAssignments.builder();
         for (final Object o: items) {
 
             final JSONObject item = (JSONObject) o;
@@ -52,34 +58,45 @@ public final class QueueSerializerService {
         return builder.build();
     }
 
-    public String serialize(final List<Queue.Item> queue, final NodeAssignements assignments) {
+    public String serialize(
+            final StateProvider stateProvider,
+            final NodeAssignments assignments
+    ) {
 
-        final Serializer serializer = new Serializer(new JSONStringer(), assignments);
+        final Serializer serializer = new Serializer(new JSONStringer(), assignments, stateProvider);
 
-        return serializer.run(queue).toString();
+        return serializer.run().toString();
     }
 
     private static final class Serializer {
 
         private final JSONStringer builder;
-        private final NodeAssignements assignments;
+        private final NodeAssignments assignments;
+        private final StateProvider stateProvider;
 
-        public Serializer(final JSONStringer builder, final NodeAssignements nodeAssignements) {
+        public Serializer(
+                final JSONStringer builder,
+                final NodeAssignments nodeAssignements,
+                final StateProvider stateProvider
+        ) {
 
             this.builder = builder;
             this.assignments = nodeAssignements;
+            this.stateProvider = stateProvider;
         }
 
-        public JSONBuilder run(final List<Queue.Item> queue) {
+        public JSONBuilder run() {
 
             builder.object().key("queue").array();
 
-            queue(queue);
+            queue(stateProvider);
 
             return builder.endArray().endObject();
         }
 
-        private void queue(final List<Queue.Item> queue) {
+        private void queue(final StateProvider stateProvider) {
+
+            final List<? extends Queue.Item> queue = stateProvider.getQueue();
 
             if (queue == null) return;
 
@@ -98,7 +115,7 @@ public final class QueueSerializerService {
 
                 builder.endArray();
 
-                builder.key("assigned").value(assignments.taskNodeName(item.id));
+                builder.key("assigned").value(assignments.nodeName(item));
 
                 builder.endObject();
             }
@@ -115,17 +132,29 @@ public final class QueueSerializerService {
 
         private void nodes(final Queue.Item item) {
 
-            final Set<Node> nodes = item.getAssignedLabel().getNodes();
-            for (final Node node: nodes) {
+            for (final Node node: getUsableNodes(item)) {
 
                 builder.object();
 
-                builder.key("name").value(node.getDisplayName());
+                builder.key("name").value(node.getNodeName());
                 builder.key("executors").value(node.getNumExecutors());
                 builder.key("freeExecutors").value(node.toComputer().countIdle());
 
                 builder.endObject();
             }
+        }
+
+        private Collection<Node> getUsableNodes(final Queue.Item item) {
+
+            final Label label = item.getAssignedLabel();
+
+            if (label != null) {
+
+                final Set<Node> nodes = label.getNodes();
+                if (nodes != null && !nodes.isEmpty()) return nodes;
+            }
+
+            return stateProvider.getNodes();
         }
     }
 }

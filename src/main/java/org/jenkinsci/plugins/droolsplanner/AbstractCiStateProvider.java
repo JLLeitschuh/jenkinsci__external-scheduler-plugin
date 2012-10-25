@@ -23,37 +23,56 @@
  */
 package org.jenkinsci.plugins.droolsplanner;
 
-import hudson.Extension;
+import hudson.model.AbstractCIBase;
+import hudson.model.Node;
 import hudson.model.Queue;
-import hudson.model.queue.QueueSorter;
 
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Drools planner sorter
- *
- * @author ogondza
- */
-@Extension
-public class Sorter extends QueueSorter {
+public class AbstractCiStateProvider implements StateProvider {
 
-    private static final Comparator<Queue.Item> comparator = new Comparator<Queue.Item> () {
+    private final AbstractCIBase base;
 
-        public int compare(final Queue.Item lhs, final Queue.Item rhs) {
+    public AbstractCiStateProvider(final AbstractCIBase base) {
 
-            if (lhs.task == rhs.task) return 0;
-            if (lhs.task == null) return -1;
-            if (rhs.task == null) return 1;
+        if (base == null) throw new IllegalArgumentException("Base is null");
 
-            return lhs.task.getDisplayName().compareTo(rhs.task.getDisplayName());
-        }
-    };
+        this.base = base;
+    }
+
+    public List<Node> getNodes() {
+
+        final List<Node> nodes = new ArrayList<Node>();
+
+        nodes.addAll(base.getNodes());
+        nodes.add(base);
+
+        return nodes;
+    }
+
+    public List<? extends Queue.Item> getQueue() {
+
+        return base.getQueue().getBuildableItems();
+    }
 
     @Override
-    public void sortBuildableItems(List<Queue.BuildableItem> items) {
+    public boolean equals(final Object rhs) {
 
-        Collections.sort(items, comparator);
+        if (this == rhs) return true;
+
+        if (rhs == null) return false;
+
+        if (!this.getClass().equals(rhs.getClass())) return false;
+
+        final AbstractCiStateProvider otherProvider = (AbstractCiStateProvider) rhs;
+
+        return base.equals(otherProvider.base);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return base.hashCode() * 7 + 11;
     }
 }
