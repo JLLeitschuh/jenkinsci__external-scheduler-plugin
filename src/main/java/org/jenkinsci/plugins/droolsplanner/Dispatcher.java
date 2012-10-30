@@ -23,66 +23,55 @@
  */
 package org.jenkinsci.plugins.droolsplanner;
 
-import hudson.model.AbstractCIBase;
 import hudson.model.Node;
 import hudson.model.Queue;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import hudson.model.Queue.BuildableItem;
+import hudson.model.queue.QueueTaskDispatcher;
+import hudson.model.queue.CauseOfBlockage;
 
 /**
- * Encapsulate Jenkins state
+ * Assign jobs to particular nodes when Jenkins asks.
  *
  * @author ogondza
  */
-public class AbstractCiStateProvider implements StateProvider {
+public class Dispatcher extends QueueTaskDispatcher {
 
-    private final AbstractCIBase base;
+    private final DroolsPlanner.DescriptorImpl descriptor;
 
-    public AbstractCiStateProvider(final AbstractCIBase base) {
+    /*package*/ Dispatcher(final DroolsPlanner.DescriptorImpl descriptor) {
 
-        if (base == null) throw new IllegalArgumentException("Base is null");
+        if (descriptor == null) throw new AssertionError("No descriptor");
 
-        this.base = base;
+        this.descriptor = descriptor;
     }
 
-    public List<Node> getNodes() {
+    public CauseOfBlockage canRun(final Queue.Item item) {
 
-        final List<Node> nodes = new ArrayList<Node>();
-
-        nodes.addAll(base.getNodes());
-        nodes.add(base);
-
-        return nodes;
-    }
-
-    public List<? extends Queue.Item> getQueue() {
-
-        return Arrays.asList(base.getQueue().getItems());
-    }
-
-    @Override
-    public boolean equals(final Object rhs) {
-
-        if (rhs == null) return false;
-
-        if (this == rhs) return true;
-
-        if (!this.getClass().equals(rhs.getClass())) return false;
-
-        final AbstractCiStateProvider otherProvider = (AbstractCiStateProvider) rhs;
-
-        if (this.base == otherProvider.base) return true;
-
-        return getNodes().equals(otherProvider.getNodes())
-                && getQueue().equals(otherProvider.getQueue())
+        return (getNodeName(item) == null)
+                ? NOT_ASSIGNED
+                : null
         ;
     }
 
-    @Override
-    public int hashCode() {
+    public CauseOfBlockage canTake(final Node node, final BuildableItem item) {
 
-        return 31 * getNodes().hashCode() + getQueue().hashCode() + 7;
+        return (node.getNodeName().equals(getNodeName(item)))
+                ? null
+                : NOT_ASSIGNED
+        ;
     }
+
+    private String getNodeName(final Queue.Item item) {
+
+        return descriptor.getPlanner().solution().nodeName(item);
+    }
+
+    private static final CauseOfBlockage NOT_ASSIGNED = new CauseOfBlockage () {
+
+        @Override
+        public String getShortDescription() {
+
+            return "Drools Planner decided not at assign the job to any node";
+        }
+    };
 }

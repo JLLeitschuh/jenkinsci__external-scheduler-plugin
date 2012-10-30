@@ -41,7 +41,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 @PrepareForTest(Node.class)
 public class QueueSerializerServiceTest {
 
-    private static final QueueSerializerService SERIALIZER = new QueueSerializerService();
+    private static final JsonSerializer SERIALIZER = new JsonSerializer();
 
     private final NodeMockFactory nodeFactory = new NodeMockFactory();
 
@@ -54,7 +54,7 @@ public class QueueSerializerServiceTest {
         		"{ \"id\" : 2, \"name\" : \"job@2\", \"node\" : \"not-assigned\" } ] }"
         ;
 
-        final NodeAssignments assignments = SERIALIZER.deserialize(json);
+        final NodeAssignments assignments = SERIALIZER.extractAssignments(json);
 
         assertEquals(2, assignments.size());
         assertEquals("vmg77-Win2k3-x86_64", assignments.nodeName(1));
@@ -64,7 +64,7 @@ public class QueueSerializerServiceTest {
     @Test
     public void serializeSingleItem() {
 
-        final String actual = SERIALIZER.serialize(
+        final String actual = SERIALIZER.buildQuery(
                 new StateProviderMock(singleItem(), nodes),
                 NodeAssignments.empty()
         );
@@ -91,7 +91,7 @@ public class QueueSerializerServiceTest {
     @Test
     public void serializeSeveralItems() {
 
-        final String actual = SERIALIZER.serialize(
+        final String actual = SERIALIZER.buildQuery(
                 new StateProviderMock(severalItems(), nodes),
                 NodeAssignments.builder()
                         .assign(4, "slave2")
@@ -134,7 +134,7 @@ public class QueueSerializerServiceTest {
         nodes.add(nodeFactory.node("slave_2:1", 2, 1));
         nodes.add(nodeFactory.node("slave_1:2", 1, 2));
 
-        final String actual = SERIALIZER.serialize(
+        final String actual = SERIALIZER.buildQuery(
                 new StateProviderMock(unlabeledItem(), nodes),
                 NodeAssignments.empty()
         );

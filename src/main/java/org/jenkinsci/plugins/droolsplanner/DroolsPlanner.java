@@ -26,16 +26,13 @@ package org.jenkinsci.plugins.droolsplanner;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
-import hudson.model.Node;
-import hudson.model.Queue;
-import hudson.model.Queue.BuildableItem;
-import hudson.model.queue.QueueTaskDispatcher;
-import hudson.model.queue.CauseOfBlockage;
 import hudson.util.FormValidation;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
@@ -49,6 +46,37 @@ import org.kohsuke.stapler.StaplerRequest;
  */
 public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> {
 
+    private final static Logger LOGGER = Logger.getLogger(
+            DroolsPlanner.class.getName()
+    );
+
+    /**
+     * Register Dispatcher as a Jenkins extension
+     * @return  Dispatcher instance
+     */
+    @Extension
+    public static Dispatcher getDispatcher() {
+
+        return new Dispatcher(descriptorInstance());
+    }
+
+    /**
+     * Register RemoteUpdater as a Jenkins extension
+     * @return  RemoteUpdater instance
+     */
+    @Extension
+    public static RemoteUpdater getUpdater() {
+
+        return new RemoteUpdater(descriptorInstance());
+    }
+
+    private static DescriptorImpl descriptorInstance() {
+
+        return (DescriptorImpl) Jenkins.getInstance()
+                .getDescriptor(DroolsPlanner.class)
+        ;
+    }
+
     @Override
     public DescriptorImpl getDescriptor() {
 
@@ -56,66 +84,14 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
     }
 
     @Extension
-    public static final class Dispatcher extends QueueTaskDispatcher {
+    public static class DescriptorImpl extends Descriptor<DroolsPlanner> {
 
-        private final DescriptorImpl descriptor;
-        private NodeAssignments assignments = NodeAssignments.empty();
-        private int lastState = -1;
+        private static final Planner NULL_PLANNER = new NullPlanner();
 
-        public Dispatcher() {
-
-            descriptor = (DescriptorImpl) Jenkins
-                    .getInstance()
-                    .getDescriptor(DroolsPlanner.class)
-            ;
-
-            update();
-        }
-
-        public CauseOfBlockage canRun(Queue.Item item) {
-
-            update();
-
-            if (assignments.nodeName(item) == null) return new NotAssigned();
-
-            return null;
-        }
-
-        public CauseOfBlockage canTake(Node node, BuildableItem item) {
-
-            return new NotAssigned();
-        }
-
-        private void update() {
-
-            final StateProvider stateProvider = descriptor.getStateProvider();
-            final int currentState = stateProvider.hashCode();
-
-            if (lastState == currentState) return;
-
-            descriptor.getPlannerProxy().queue(stateProvider, assignments);
-            assignments = descriptor.getPlannerProxy().solution();
-
-            lastState = currentState;
-        }
-
-        public static final class NotAssigned extends CauseOfBlockage {
-
-            @Override
-            public String getShortDescription() {
-
-                return "Drools Planner decided not at assign the job to any node";
-            }
-        }
-    }
-
-    @Extension
-    public static final class DescriptorImpl extends Descriptor<DroolsPlanner> {
-
-        private transient PlannerProxy plannerProxy;
+        private transient Planner planner;
         private transient StateProvider stateProvider;
 
-        private URL serverUrl;
+        private String serverUrl;
 
         public DescriptorImpl() {
 
@@ -128,19 +104,30 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
             return "Drools planner plugin";
         }
 
-        public URL getServerUrl() {
+        public String getServerUrl() {
 
             return serverUrl;
         }
 
-        public PlannerProxy getPlannerProxy() {
+        private URL getUrl(final String serverUrl) {
 
-            if (plannerProxy == null) {
+            try {
 
-                updatePlanner();
+                return new URL(serverUrl);
+            } catch (MalformedURLException ex) {
+
+                return null;
+            }
+        }
+
+        public Planner getPlanner() {
+
+            if (planner == null) {
+
+                planner = reloadPlanner();
             }
 
-            return plannerProxy;
+            return planner;
         }
 
         public StateProvider getStateProvider() {
@@ -158,28 +145,41 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
                 final StaplerRequest req, final JSONObject formData
         ) throws FormException {
 
-            try {
-
-                serverUrl = new URL(formData.getString("serverUrl"));
-            } catch (MalformedURLException ex) {
-
-                throw new FormException(ex, "serverUrl");
-            }
-
+            serverUrl = formData.getString("serverUrl");
             save();
 
-            updatePlanner();
+            planner = reloadPlanner();
+
             return true;
         }
 
-        private void updatePlanner() {
+        private Planner reloadPlanner() {
 
-            if (plannerProxy != null && serverUrl.equals(plannerProxy.remoteUrl())) return;
+            if (serverUrl == null) return NULL_PLANNER;
 
-            plannerProxy = new PlannerProxy(serverUrl).queue(
-                    getStateProvider(),
-                    NodeAssignments.empty()
-            );
+            final URL url = getUrl(serverUrl);
+
+            if (url == null) return NULL_PLANNER;
+
+            if (planner != null) {
+
+                // Do not create new planner for the same url
+                if (url.equals(planner.remoteUrl())) return planner;
+
+                planner.stop();
+            }
+
+
+            final Planner planner = new CachingPlanner(new RestPlanner(url));
+
+            try {
+
+                return planner.queue(getStateProvider(), NodeAssignments.empty());
+            } catch (PlannerException ex) {
+
+                LOGGER.log(Level.WARNING, "Drools queue planner not responding", ex);
+                return NULL_PLANNER;
+            }
         }
 
         public FormValidation doCheckServerUrl(@QueryParameter String serverUrl) {
@@ -187,7 +187,7 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
             URL url;
             try {
 
-                url = new URL(serverUrl + "/hudsonQueue");
+                url = new URL(new URL(serverUrl), "/rest/hudsonQueue");
             } catch(MalformedURLException ex) {
 
                 return FormValidation.error(ex, "It is not URL");
@@ -201,7 +201,7 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
                 return FormValidation.warning(ex, "Server seems down or it is not Drools planner server");
             }
 
-            return FormValidation.ok("ok");
+            return FormValidation.ok();
         }
     }
 }

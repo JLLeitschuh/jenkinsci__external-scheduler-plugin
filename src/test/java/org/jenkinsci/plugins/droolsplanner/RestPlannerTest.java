@@ -29,6 +29,7 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertSame;
 import hudson.model.Node;
 import hudson.model.Queue;
 
@@ -48,7 +49,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(Node.class)
-public class PlannerProxyTest {
+public class RestPlannerTest {
 
     private final NodeAssignments assignments = NodeAssignments.builder()
             .assign(2, "get_assigned_solution")
@@ -59,12 +60,12 @@ public class PlannerProxyTest {
 
     private final List<Node> nodes = new ArrayList<Node>();
 
-    private PlannerProxy pp;
+    private Planner pp;
 
     @Before
     public void setUp() throws MalformedURLException {
 
-        pp = new PlannerProxy(new URL("http://hudsonqueueplanning-ogondza.rhcloud.com/"));
+        pp = new RestPlanner(new URL("http://hudsonqueueplanning-ogondza.rhcloud.com/"));
     }
 
     @After
@@ -132,6 +133,42 @@ public class PlannerProxyTest {
     public void getSolutionFromNotStarted() {
 
         pp.solution();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void getScoreFromStopped() {
+
+        pp.stop();
+        pp.score();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void getSolutionFromStopped() {
+
+        pp.stop();
+        pp.solution();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void sendQueueToStopped() {
+
+        pp.stop();
+        pp.queue(null, null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void getInstanctWithoutUrl() {
+
+        new RestPlanner(null);
+    }
+
+    @Test
+    public void getUrl() throws MalformedURLException {
+
+        final URL url = new URL("http://localhost:8080");
+        final Planner planner = new RestPlanner(url);
+
+        assertSame(url, planner.remoteUrl());
     }
 
     private SortedSet<Node> getNodeSet(String name, int executors, int freeexecutors) {

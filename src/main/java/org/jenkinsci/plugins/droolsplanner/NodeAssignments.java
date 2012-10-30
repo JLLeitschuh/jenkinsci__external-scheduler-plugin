@@ -36,6 +36,8 @@ import java.util.Map;
  */
 public final class NodeAssignments {
 
+    private static final NodeAssignments EMPTY = NodeAssignments.builder().build();
+
     private final Map<Integer, String> assignments;
 
     public static NodeAssignments.Builder builder() {
@@ -45,7 +47,7 @@ public final class NodeAssignments {
 
     public static NodeAssignments empty() {
 
-        return builder().build();
+        return EMPTY;
     }
 
     public static final class Builder {
@@ -82,5 +84,31 @@ public final class NodeAssignments {
     public int size() {
 
         return assignments.size();
+    }
+
+    @Override
+    public boolean equals(final Object rhs) {
+
+        if (rhs == null) return false;
+
+        if (this == rhs) return true;
+
+        if (!this.getClass().equals(rhs.getClass())) return false;
+
+        final NodeAssignments na = (NodeAssignments) rhs;
+
+        return assignments.equals(na.assignments);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return 31 * assignments.hashCode() + 13;
+    }
+
+    @Override
+    public String toString() {
+
+        return this.getClass().getName() + ": " + assignments.toString();
     }
 }

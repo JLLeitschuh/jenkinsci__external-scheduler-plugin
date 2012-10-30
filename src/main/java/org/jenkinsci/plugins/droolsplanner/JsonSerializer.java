@@ -23,6 +23,7 @@
  */
 package org.jenkinsci.plugins.droolsplanner;
 
+import hudson.model.Computer;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.Queue;
@@ -36,14 +37,37 @@ import net.sf.json.JSONObject;
 import net.sf.json.util.JSONBuilder;
 import net.sf.json.util.JSONStringer;
 
-public final class QueueSerializerService {
+/**
+ * Translate objects to JSON and back
+ *
+ * @author ogondza
+ */
+public final class JsonSerializer {
 
-    public int getScore(final String score) {
+    /**
+     * Avoid confusion translating "" to "master" and back.
+     */
+    private static final String MASTER_NAME_OUTER = "master";
+    private static final String MASTER_NAME_INNER = "";
+
+    /**
+     * Extract int from score message
+     *
+     * @param score JSON score
+     * @return Integral score
+     */
+    public int extractScore(final String score) {
 
         return JSONObject.fromObject(score).getInt("score");
     }
 
-    public NodeAssignments deserialize(final String solution) {
+    /**
+     * Extract assignments from solution message
+     *
+     * @param solution JSON solution
+     * @return Updated assignments
+     */
+    public NodeAssignments extractAssignments(final String solution) {
 
         final JSONArray items = JSONObject.fromObject(solution).getJSONArray("solution");
 
@@ -52,20 +76,32 @@ public final class QueueSerializerService {
 
             final JSONObject item = (JSONObject) o;
 
-            builder.assign(item.getInt("id"), item.getString("node"));
+            String nodeName = item.getString("node");
+            if (nodeName.equals(MASTER_NAME_OUTER)) {
+
+                nodeName = MASTER_NAME_INNER;
+            }
+
+            builder.assign(item.getInt("id"), nodeName);
         }
 
         return builder.build();
     }
 
-    public String serialize(
-            final StateProvider stateProvider,
-            final NodeAssignments assignments
+    /**
+     * Serialize current state as JSON
+     *
+     * @param stateProvider Current state
+     * @param assignments Latest assignments
+     * @return JSON query
+     */
+    public String buildQuery(
+            final StateProvider stateProvider, final NodeAssignments assignments
     ) {
 
         final Serializer serializer = new Serializer(new JSONStringer(), assignments, stateProvider);
 
-        return serializer.run().toString();
+        return serializer.getJson().toString();
     }
 
     private static final class Serializer {
@@ -80,12 +116,16 @@ public final class QueueSerializerService {
                 final StateProvider stateProvider
         ) {
 
+            if (builder == null) throw new AssertionError("builder is null");
+            if (nodeAssignements == null) throw new AssertionError("nodeAssignments is null");
+            if (stateProvider == null) throw new AssertionError("stateProvider is null");
+
             this.builder = builder;
             this.assignments = nodeAssignements;
             this.stateProvider = stateProvider;
         }
 
-        public JSONBuilder run() {
+        public JSONBuilder getJson() {
 
             builder.object().key("queue").array();
 
@@ -134,15 +174,22 @@ public final class QueueSerializerService {
 
             for (final Node node: getUsableNodes(item)) {
 
+                final Computer computer = node.toComputer();
+                final int freeExecutors = (computer == null)
+                        ? 0
+                        : computer.countIdle()
+                ;
+
                 builder.object();
 
-                builder.key("name").value(node.getNodeName());
+                builder.key("name").value(getName(node));
                 builder.key("executors").value(node.getNumExecutors());
-                builder.key("freeExecutors").value(node.toComputer().countIdle());
+                builder.key("freeExecutors").value(freeExecutors);
 
                 builder.endObject();
             }
         }
+
 
         private Collection<Node> getUsableNodes(final Queue.Item item) {
 
@@ -155,6 +202,18 @@ public final class QueueSerializerService {
             }
 
             return stateProvider.getNodes();
+        }
+
+        private String getName(final Node node) {
+
+            String nodeName = node.getNodeName();
+
+            if (MASTER_NAME_INNER.equals(nodeName)) {
+
+                nodeName = MASTER_NAME_OUTER;
+            }
+
+            return nodeName;
         }
     }
 }
