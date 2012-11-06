@@ -29,4 +29,9 @@ public class PlannerException extends RuntimeException {
 
         super(cause);
     }
+
+    public PlannerException(final String message) {
+
+        super(message);
+    }
 }

@@ -26,6 +26,8 @@ package org.jenkinsci.plugins.droolsplanner;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.ws.rs.core.MediaType;
 
@@ -51,8 +53,6 @@ public final class RestPlanner implements Planner {
     private static final JsonSerializer serializator = new JsonSerializer();
     private static final Client client = Client.create();
 
-    private final URL serviceDestination;
-
     private enum Status {
         NOT_STARTED, RUNNING, STOPPED;
 
@@ -67,6 +67,8 @@ public final class RestPlanner implements Planner {
         }
     }
 
+    private final URL serviceDestination;
+    private final String plannerName;
     private Status status = Status.NOT_STARTED;
 
     public RestPlanner(final URL serviceDestination) {
@@ -76,6 +78,7 @@ public final class RestPlanner implements Planner {
         );
 
         this.serviceDestination = serviceDestination;
+        this.plannerName = fetchPlannerName();
     }
 
     /**
@@ -84,6 +87,36 @@ public final class RestPlanner implements Planner {
     public URL remoteUrl() {
 
         return serviceDestination;
+    }
+
+    public String name() {
+
+        return plannerName;
+    }
+
+    /**
+     * Validate URL
+     * @return Application name or null when not a Drools planner
+     */
+    private String fetchPlannerName() {
+
+        final String info = infoContent();
+        final Matcher matcher = Pattern
+                .compile("^hudson-queue-planning : (.*?) on URL")
+                .matcher(info)
+        ;
+
+        final boolean valid = matcher.find();
+
+        if (!valid) throw new PlannerException("Not a drools planner: " + info);
+
+        return matcher.group();
+
+    }
+
+    private String infoContent() {
+
+        return get(getResource("/info").accept(MediaType.TEXT_PLAIN));
     }
 
     /**

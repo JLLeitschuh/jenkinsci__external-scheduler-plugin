@@ -28,7 +28,6 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.logging.Level;
@@ -122,7 +121,7 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
 
             if (planner == null) {
 
-                planner = reloadPlanner();
+                reloadPlanner();
             }
 
             return planner;
@@ -146,60 +145,51 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
             serverUrl = formData.getString("serverUrl");
             save();
 
-            planner = reloadPlanner();
+            reloadPlanner();
 
             return true;
         }
 
-        private Planner reloadPlanner() {
+        private void reloadPlanner() {
 
-            if (serverUrl == null) return null;
+            if (serverUrl == null) return;
 
             final URL url = getUrl(serverUrl);
 
-            if (url == null) return null;
+            if (url == null) return;
 
             if (planner != null) {
 
                 // Do not create new planner for the same url
-                if (url.equals(planner.remoteUrl())) return planner;
+                if (url.equals(planner.remoteUrl())) return;
 
                 planner.stop();
             }
 
-
-            final Planner planner = new CachingPlanner(new RestPlanner(url));
-
             try {
 
-                return planner.queue(getStateProvider(), NodeAssignments.empty());
+                final Planner newPlanner = new CachingPlanner(new RestPlanner(url));
+                planner = newPlanner.queue(getStateProvider(), NodeAssignments.empty());
             } catch (PlannerException ex) {
 
                 LOGGER.log(Level.WARNING, "Drools queue planner not responding", ex);
-                return null;
             }
         }
 
         public FormValidation doCheckServerUrl(@QueryParameter String serverUrl) {
 
-            URL url;
             try {
 
-                url = new URL(new URL(serverUrl), "/rest/hudsonQueue");
+                final URL url = new URL(serverUrl);
+
+                return FormValidation.ok(new RestPlanner(url).name());
             } catch(MalformedURLException ex) {
 
                 return FormValidation.error(ex, "It is not URL");
+            } catch(PlannerException ex) {
+
+                return FormValidation.warning(ex, "Server seems down or it is not a Drools planner server");
             }
-
-            try {
-
-                url.getContent();
-            } catch (IOException ex) {
-
-                return FormValidation.warning(ex, "Server seems down or it is not Drools planner server");
-            }
-
-            return FormValidation.ok();
         }
     }
 }

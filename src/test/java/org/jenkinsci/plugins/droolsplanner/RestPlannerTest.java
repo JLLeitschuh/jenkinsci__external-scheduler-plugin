@@ -51,6 +51,8 @@ import org.powermock.modules.junit4.PowerMockRunner;
 @PrepareForTest(Node.class)
 public class RestPlannerTest {
 
+    private static final String SERVICE = "http://hudsonqueueplanning-ogondza.rhcloud.com/";
+
     private final NodeAssignments assignments = NodeAssignments.builder()
             .assign(2, "get_assigned_solution")
             .build()
@@ -65,7 +67,7 @@ public class RestPlannerTest {
     @Before
     public void setUp() throws MalformedURLException {
 
-        pp = new RestPlanner(new URL("http://hudsonqueueplanning-ogondza.rhcloud.com/"));
+        pp = new RestPlanner(new URL(SERVICE));
     }
 
     @After
@@ -165,7 +167,7 @@ public class RestPlannerTest {
     @Test
     public void getUrl() throws MalformedURLException {
 
-        final URL url = new URL("http://localhost:8080");
+        final URL url = new URL(SERVICE);
         final Planner planner = new RestPlanner(url);
 
         assertSame(url, planner.remoteUrl());
