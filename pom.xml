@@ -13,11 +13,12 @@
   <name>Drools Planner Plugin</name>
   <description>Drools based queue planner plugin</description>
   <url>https://wiki.jenkins-ci.org/display/JENKINS/Drools+Queue+Planner+Plugin</url>
-
+  
   <developers>
     <developer>
       <id>olivergondza</id>
       <name>Oliver Gondža</name>
+      <email>ogondza@redhat.org</email>
     </developer>
   </developers>
   <scm>
@@ -43,6 +44,7 @@
   <properties>
     <powermock.version>1.4.12</powermock.version>
     <jersey.version>1.14</jersey.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
   <dependencies>    

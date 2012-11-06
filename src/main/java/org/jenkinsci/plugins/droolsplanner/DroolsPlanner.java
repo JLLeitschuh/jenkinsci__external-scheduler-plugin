@@ -86,8 +86,6 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
     @Extension
     public static class DescriptorImpl extends Descriptor<DroolsPlanner> {
 
-        private static final Planner NULL_PLANNER = new NullPlanner();
-
         private transient Planner planner;
         private transient StateProvider stateProvider;
 
@@ -155,11 +153,11 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
 
         private Planner reloadPlanner() {
 
-            if (serverUrl == null) return NULL_PLANNER;
+            if (serverUrl == null) return null;
 
             final URL url = getUrl(serverUrl);
 
-            if (url == null) return NULL_PLANNER;
+            if (url == null) return null;
 
             if (planner != null) {
 
@@ -178,7 +176,7 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
             } catch (PlannerException ex) {
 
                 LOGGER.log(Level.WARNING, "Drools queue planner not responding", ex);
-                return NULL_PLANNER;
+                return null;
             }
         }
 

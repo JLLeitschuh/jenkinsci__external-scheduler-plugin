@@ -47,23 +47,42 @@ public class Dispatcher extends QueueTaskDispatcher {
 
     public CauseOfBlockage canRun(final Queue.Item item) {
 
-        return (getNodeName(item) == null)
-                ? NOT_ASSIGNED
-                : null
-        ;
+        return translate(hasNode(item));
     }
 
     public CauseOfBlockage canTake(final Node node, final BuildableItem item) {
 
-        return (node.getNodeName().equals(getNodeName(item)))
-                ? null
-                : NOT_ASSIGNED
-        ;
+        return translate(assignedToNode(node, item));
     }
 
-    private String getNodeName(final Queue.Item item) {
+    private boolean hasNode(final Queue.Item item) {
 
-        return descriptor.getPlanner().solution().nodeName(item);
+        // create local reference to prevent race
+        final Planner planner = descriptor.getPlanner();
+
+        if (planner == null) return true;
+
+        return nodeName(planner, item) != null;
+    }
+
+    private boolean assignedToNode(final Node node, final BuildableItem item) {
+
+        // create local reference to prevent race
+        final Planner planner = descriptor.getPlanner();
+
+        if (planner == null) return true;
+
+        return node.getNodeName().equals(nodeName(planner, item));
+    }
+
+    private String nodeName(final Planner planner, final Queue.Item item) {
+
+        return planner.solution().nodeName(item);
+    }
+
+    private CauseOfBlockage translate(final boolean decision) {
+
+        return decision ? null : NOT_ASSIGNED;
     }
 
     private static final CauseOfBlockage NOT_ASSIGNED = new CauseOfBlockage () {

@@ -39,7 +39,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(Node.class)
-public class QueueSerializerServiceTest {
+public class JsonSerializerTest {
 
     private static final JsonSerializer SERIALIZER = new JsonSerializer();
 
@@ -100,7 +100,7 @@ public class QueueSerializerServiceTest {
 
         final String json = "{\"queue\":[{\"id\":2,\"priority\":50,\"inQueueSince\":3,\"name\":\"Single queue item\"," +
                 "\"nodes\":[{\"name\":\"master\",\"executors\":2,\"freeExecutors\":1}],\"assigned\":null}," +
-                "{\"id\":4,\"priority\":70,\"inQueueSince\":5,\"name\":\"raven_eap\"," +
+                "{\"id\":4,\"priority\":50,\"inQueueSince\":5,\"name\":\"raven_eap\"," +
                 "\"nodes\":[{\"name\":\"slave1\",\"executors\":7,\"freeExecutors\":7},{\"name\":\"slave2\",\"executors\":1,\"freeExecutors\":0}]" +
                 ",\"assigned\":\"slave2\"}]}"
         ;

@@ -163,10 +163,6 @@ public final class JsonSerializer {
 
         private int priority(final Queue.Item item) {
 
-            final String jobName = item.task.getDisplayName().toLowerCase();
-
-            if (jobName.contains("eap") || jobName.contains("brms") || jobName.contains("jdg")) return 70;
-
             return 50;
         }
 

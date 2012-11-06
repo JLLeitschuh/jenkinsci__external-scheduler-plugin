@@ -27,7 +27,7 @@ public class RemoteUpdater extends PeriodicWork {
 
         final Planner planner = descriptor.getPlanner();
 
-//        if (planner == null) return;
+        if (planner == null) return;
 
         planner.queue(stateProvider, planner.solution());
     }
