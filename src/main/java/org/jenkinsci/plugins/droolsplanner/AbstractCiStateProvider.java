@@ -24,6 +24,7 @@
 package org.jenkinsci.plugins.droolsplanner;
 
 import hudson.model.AbstractCIBase;
+import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.Queue;
 
@@ -47,16 +48,41 @@ public class AbstractCiStateProvider implements StateProvider {
         this.base = base;
     }
 
+    /**
+     * @return List of online Nodes
+     */
     public List<Node> getNodes() {
 
         final List<Node> nodes = new ArrayList<Node>();
 
-        nodes.addAll(base.getNodes());
-        nodes.add(base);
+        for (final Node nodeCadidate: base.getNodes()) {
+
+            if (nodeReady(nodeCadidate)) {
+
+                nodes.add(nodeCadidate);
+            }
+        }
+
+        if (nodeReady(base)) {
+
+            nodes.add(base);
+        }
+
 
         return nodes;
     }
 
+    private boolean nodeReady(final Node node) {
+
+        final Computer computer = node.toComputer();
+        if (computer == null) return false;
+
+        return !computer.isOffline();
+    }
+
+    /**
+     * @return List of queued item to be scheduled
+     */
     public List<? extends Queue.Item> getQueue() {
 
         return Arrays.asList(base.getQueue().getItems());

@@ -25,8 +25,10 @@ package org.jenkinsci.plugins.droolsplanner;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.when;
 import hudson.model.AbstractCIBase;
+import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.Queue;
 import hudson.model.Queue.Item;
@@ -36,17 +38,29 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.junit.runner.RunWith;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({Node.class})
 public class AbstractCiStateProviderTest {
 
-    @Mock AbstractCIBase jenkins;
+    private Computer offlineComputer;
+    private AbstractCIBase jenkins;
+    private Computer onlineComputer;
 
     @Before
     public void setUp() {
 
-        initMocks(this);
+        offlineComputer = mock(Computer.class);
+        when(offlineComputer.isOffline()).thenReturn(true);
+
+        onlineComputer = mock(Computer.class);
+        when(onlineComputer.isOffline()).thenReturn(false);
+
+        jenkins = mock(AbstractCIBase.class);
+        when(jenkins.toComputer()).thenReturn(onlineComputer);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -56,10 +70,28 @@ public class AbstractCiStateProviderTest {
     }
 
     @Test
+    public void getOfflineJenkinsNodes() {
+
+        when(jenkins.toComputer()).thenReturn(offlineComputer);
+
+        final List<Node> nodes = new AbstractCiStateProvider(jenkins).getNodes();
+
+        assertEquals(0, nodes.size());
+    }
+
+    @Test
     public void getNodes() {
 
-        final Node slave = Mockito.mock(Node.class);
-        usingNodes(jenkins, slave);
+        final Node slave = node();
+        final Node offlineSlave = node();
+        final Node noComputerSlave = node();
+
+        when(offlineSlave.toComputer()).thenReturn(offlineComputer);
+        when(offlineComputer.isOffline()).thenReturn(true);
+
+        when(noComputerSlave.toComputer()).thenReturn(null);
+
+        usingNodes(jenkins, offlineSlave, noComputerSlave, slave);
 
         final List<Node> nodes = new AbstractCiStateProvider(jenkins).getNodes();
 
@@ -74,7 +106,7 @@ public class AbstractCiStateProviderTest {
 
         final List<Node> slaveList = Arrays.asList(slaves);
 
-        Mockito.when(jenkins.getNodes()).thenReturn(slaveList);
+        when(jenkins.getNodes()).thenReturn(slaveList);
 
         return slaveList;
     }
@@ -82,8 +114,8 @@ public class AbstractCiStateProviderTest {
     @Test
     public void getQueue() {
 
-        final Item firstItem = Mockito.mock(Queue.Item.class);
-        final Item secondItem = Mockito.mock(Queue.Item.class);
+        final Item firstItem = mock(Queue.Item.class);
+        final Item secondItem = mock(Queue.Item.class);
 
         final Queue.Item[] inItems = usingQueue(jenkins, firstItem, secondItem);
 
@@ -96,20 +128,20 @@ public class AbstractCiStateProviderTest {
 
     private Queue.Item[] usingQueue(AbstractCIBase jenkins, final Queue.Item... items) {
 
-        final Queue queue = Mockito.mock(Queue.class);
-        Mockito.when(jenkins.getQueue()).thenReturn(queue);
+        final Queue queue = mock(Queue.class);
+        when(jenkins.getQueue()).thenReturn(queue);
 
-        Mockito.when(queue.getItems()).thenReturn(items);
+        when(queue.getItems()).thenReturn(items);
         return items;
     }
 
     @Test
     public void delegateEqualsHashCode() {
 
-        final Node slave1 = Mockito.mock(Node.class);
-        final Node slave2 = Mockito.mock(Node.class);
-        final Queue.Item item1 = Mockito.mock(Queue.Item.class);
-        final Queue.Item item2 = Mockito.mock(Queue.Item.class);
+        final Node slave1 = node();
+        final Node slave2 = node();
+        final Queue.Item item1 = mock(Queue.Item.class);
+        final Queue.Item item2 = mock(Queue.Item.class);
 
         usingNodes(jenkins, slave1, slave2);
         usingQueue(jenkins, item1, item2);
@@ -119,5 +151,14 @@ public class AbstractCiStateProviderTest {
 
         assertEquals(sp1.hashCode(), sp2.hashCode());
         assertEquals(sp1, sp2);
+    }
+
+    private Node node() {
+
+        final Node node = mock(Node.class);
+
+        when(node.toComputer()).thenReturn(onlineComputer);
+
+        return node;
     }
 }
