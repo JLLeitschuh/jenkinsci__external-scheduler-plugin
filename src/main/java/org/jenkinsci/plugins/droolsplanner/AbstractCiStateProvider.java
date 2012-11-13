@@ -77,7 +77,7 @@ public class AbstractCiStateProvider implements StateProvider {
         final Computer computer = node.toComputer();
         if (computer == null) return false;
 
-        return !computer.isOffline();
+        return !computer.isOffline() && computer.isAcceptingTasks();
     }
 
     /**
