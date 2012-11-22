@@ -23,46 +23,26 @@
  */
 package org.jenkinsci.plugins.droolsplanner;
 
-import java.net.URL;
 
-/**
- *
- * @author ogondza
- */
-public interface Planner {
-
-    /**
-     * Get planner URL
-     * @return Associated URL
-     */
-    URL remoteUrl();
-
-    /**
-     * Get planner score
-     * @return score
-     */
-    int score();
-
-    /**
-     * Get planner solution
-     * @return New assignments
-     */
-    NodeAssignments solution();
-
-    /**
-     * Put new state into planner
-     * @param stateProvider Jenkins state
-     * @param assignments Current assignments
-     * @return updated or not
-     */
-    boolean queue(
-            final StateProvider stateProvider,
-            final NodeAssignments assignments
-    );
-
-    /**
-     * Stop planner
-     * @return self
-     */
-    Planner stop();
+public class DescriptorTest {
+//
+//    private DroolsPlanner.DescriptorImpl descriptor;
+//
+//    @Before
+//    public void setUp() {
+//
+//        MockitoAnnotations.initMocks(this);
+//
+//        descriptor = Mockito.spy(Mockito.mock(
+//                DroolsPlanner.DescriptorImpl.class, Mockito.CALLS_REAL_METHODS
+//        ));
+//
+//        Mockito.doNothing().when(descriptor).load();
+//    }
+//
+//    @Test
+//    public void test () {
+//
+//        System.out.println(descriptor.getDisplayName());
+//    }
 }

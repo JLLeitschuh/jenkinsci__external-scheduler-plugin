@@ -29,6 +29,8 @@ import hudson.model.Queue.BuildableItem;
 import hudson.model.queue.QueueTaskDispatcher;
 import hudson.model.queue.CauseOfBlockage;
 
+import java.util.logging.Logger;
+
 /**
  * Assign jobs to particular nodes when Jenkins asks.
  *
@@ -36,61 +38,75 @@ import hudson.model.queue.CauseOfBlockage;
  */
 public class Dispatcher extends QueueTaskDispatcher {
 
-    private final DroolsPlanner.DescriptorImpl descriptor;
+    private final static Logger LOGGER = Logger.getLogger(
+            Dispatcher.class.getName()
+    );
 
-    /*package*/ Dispatcher(final DroolsPlanner.DescriptorImpl descriptor) {
+    private final DroolsPlanner planner;
 
-        if (descriptor == null) throw new AssertionError("No descriptor");
+    /*package*/ Dispatcher(final DroolsPlanner planner) {
 
-        this.descriptor = descriptor;
+        if (planner == null) throw new AssertionError("No planner");
+
+        this.planner = planner;
     }
 
-    public CauseOfBlockage canRun(final Queue.Item item) {
+    private String itemName(final Queue.Item item) {
 
-        return translate(hasNode(item));
+        return item.task.getDisplayName() + ":" + item.id;
     }
 
     public CauseOfBlockage canTake(final Node node, final BuildableItem item) {
 
-        return translate(assignedToNode(node, item));
-    }
+        final boolean assignedToNode = assignedToNode(node, item);
+        logStatus(assignedToNode, "assigning " + itemName(item) + " to " + node.getSelfLabel());
 
-    private boolean hasNode(final Queue.Item item) {
-
-        // create local reference to prevent race
-        final Planner planner = descriptor.getPlanner();
-
-        if (planner == null) return true;
-
-        return nodeName(planner, item) != null;
+        return assignedToNode
+                ? null
+                : notAssignedToNode(node, item)
+        ;
     }
 
     private boolean assignedToNode(final Node node, final BuildableItem item) {
 
-        // create local reference to prevent race
-        final Planner planner = descriptor.getPlanner();
+        final NodeAssignments solution = planner.currentSolution();
 
-        if (planner == null) return true;
+        if (solution == null) return true;
 
-        return node.getNodeName().equals(nodeName(planner, item));
+        return node.getSelfLabel().toString().equals(nodeName(solution, item));
     }
 
-    private String nodeName(final Planner planner, final Queue.Item item) {
+    private String nodeName(final NodeAssignments solution, final Queue.Item item) {
 
-        return planner.solution().nodeName(item);
+        return solution.nodeName(item);
     }
 
-    private CauseOfBlockage translate(final boolean decision) {
+    private void logStatus(final boolean status, String message) {
 
-        return decision ? null : NOT_ASSIGNED;
-    }
+        if (!status) {
 
-    private static final CauseOfBlockage NOT_ASSIGNED = new CauseOfBlockage () {
-
-        @Override
-        public String getShortDescription() {
-
-            return "Drools Planner decided not at assign the job to any node";
+            message = "not " + message;
         }
-    };
+
+        LOGGER.info(message);
+    }
+
+    private CauseOfBlockage notAssignedToNode(final Node node, final BuildableItem item) {
+
+        return cause(item.toString(), node.toString());
+    }
+
+    private CauseOfBlockage cause(final String item, final String node) {
+
+        return new CauseOfBlockage() {
+
+            @Override
+            public String getShortDescription() {
+
+                return String.format(
+                        "Drools Planner decided not to assign %s to %s", item, node
+                );
+            }
+        };
+    }
 }

@@ -23,10 +23,14 @@
  */
 package org.jenkinsci.plugins.droolsplanner;
 
+import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import hudson.model.Node;
 import hudson.model.Queue;
+import hudson.model.labels.LabelAtom;
+import hudson.model.queue.CauseOfBlockage;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -40,11 +44,12 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(Queue.BuildableItem.class)
+@PrepareForTest({Queue.BuildableItem.class, DroolsPlanner.class})
 public class DispatcherTest {
 
-    @Mock private DroolsPlanner.DescriptorImpl descriptor;
-    private Queue.BuildableItem item;
+    private DroolsPlanner planner;
+    @Mock private Queue.Task task;
+    @Mock private Queue.BuildableItem item;
 
     private Dispatcher dispatcher;
 
@@ -52,26 +57,35 @@ public class DispatcherTest {
     public void setUp() {
 
         MockitoAnnotations.initMocks(this);
-        dispatcher = new Dispatcher(descriptor);
+
+        planner = PowerMockito.mock(DroolsPlanner.class);
+        dispatcher = new Dispatcher(planner);
 
         item = PowerMockito.mock(Queue.BuildableItem.class);
         Whitebox.setInternalState(item, "id", 42);
+
+        Mockito.when(task.getDisplayName()).thenReturn("Task name");
+        Whitebox.setInternalState(item, "task", task);
+    }
+
+    @Test(expected = AssertionError.class)
+    public void doNotInstantiateWithoutDescriptor() {
+
+        new Dispatcher(null);
     }
 
     @Test
-    public void canNotRun() {
+    public void doNothingInCaseThereIsNotConnected() {
 
-        useSolution(NodeAssignments.empty());
+        notConnected();
 
-        assertNotNull(dispatcher.canRun(item));
+        assertNull(dispatcher.canRun(item));
+        assertNull(dispatcher.canTake(node("slave"), item));
     }
 
-    @Test
-    public void canNotRunItem() {
+    private void notConnected() {
 
-        useSolution(NodeAssignments.builder().assign(41, "slave").build());
-
-        assertNotNull(dispatcher.canRun(item));
+        Mockito.when(planner.isActive()).thenReturn(false);
     }
 
     @Test
@@ -80,26 +94,6 @@ public class DispatcherTest {
         useSolution(NodeAssignments.builder().assign(42, "slave").build());
 
         assertNull(dispatcher.canRun(item));
-    }
-
-    @Test
-    public void canNotTake() {
-
-        useSolution(NodeAssignments.empty());
-
-        assertNotNull(dispatcher.canTake(
-                node("dont care"), item
-        ));
-    }
-
-    @Test
-    public void canNotTakeItem() {
-
-        useSolution(NodeAssignments.builder().assign(41, "slave").build());
-
-        assertNotNull(dispatcher.canTake(
-                node("slave"), item
-        ));
     }
 
     @Test
@@ -112,19 +106,48 @@ public class DispatcherTest {
         ));
     }
 
+    @Test
+    public void canNotTake() {
+
+        useSolution(NodeAssignments.empty());
+
+        assertNotTaken(node("dont care"));
+    }
+
+    @Test
+    public void canNotTakeItem() {
+
+        useSolution(NodeAssignments.builder().assign(41, "slave").build());
+
+        assertNotTaken(node("slave"));
+    }
+
+    private void assertNotTaken(final Node node) {
+
+        final CauseOfBlockage causeOfBlockage = dispatcher.canTake(node, item);
+        assertNotNull(causeOfBlockage);
+
+        assertThat(
+                causeOfBlockage.getShortDescription(),
+                containsString(item.toString())
+        );
+
+        assertThat(
+                causeOfBlockage.getShortDescription(),
+                containsString(node.toString())
+        );
+    }
+
     private Node node(final String name) {
 
         final Node node = Mockito.mock(Node.class);
-        Mockito.when(node.getNodeName()).thenReturn(name);
+        Mockito.when(node.getSelfLabel()).thenReturn(new LabelAtom(name));
 
         return node;
     }
 
     private void useSolution(final NodeAssignments assignments) {
 
-        final Planner planner = Mockito.mock(Planner.class);
-        Mockito.when(descriptor.getPlanner()).thenReturn(planner);
-
-        Mockito.when(planner.solution()).thenReturn(assignments);
+        Mockito.when(planner.currentSolution()).thenReturn(assignments);
     }
 }

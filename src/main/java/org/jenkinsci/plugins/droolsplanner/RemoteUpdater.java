@@ -2,8 +2,6 @@ package org.jenkinsci.plugins.droolsplanner;
 
 import hudson.model.PeriodicWork;
 
-import org.jenkinsci.plugins.droolsplanner.DroolsPlanner.DescriptorImpl;
-
 /**
  * Update state periodically
  *
@@ -11,25 +9,24 @@ import org.jenkinsci.plugins.droolsplanner.DroolsPlanner.DescriptorImpl;
  */
 public class RemoteUpdater extends PeriodicWork {
 
-    private final DescriptorImpl descriptor;
+    private final DroolsPlanner planner;
 
-    /*package*/ public RemoteUpdater(final DescriptorImpl descriptor) {
+    /*package*/ public RemoteUpdater(final DroolsPlanner planner) {
 
-        if (descriptor == null) throw new AssertionError("No descriptor");
+        if (planner == null) throw new AssertionError("No planner");
 
-        this.descriptor = descriptor;
+        this.planner = planner;
     }
 
     @Override
     protected void doRun() throws Exception {
 
-        final StateProvider stateProvider = descriptor.getStateProvider();
+        final boolean updated = planner.sendQueue();
 
-        final Planner planner = descriptor.getPlanner();
+        if (!updated) {
 
-        if (planner == null) return;
-
-        planner.queue(stateProvider, planner.solution());
+            planner.fetchSolution();
+        }
     }
 
     @Override

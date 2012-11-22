@@ -47,38 +47,67 @@ public final class RestPlanner implements Planner {
             RestPlanner.class.getName()
     );
 
-    private static final String PREFIX = "/rest/hudsonQueue";
+    private static final String PREFIX = "rest/hudsonQueue";
     private static final String TYPE = MediaType.APPLICATION_JSON;
 
     private static final JsonSerializer serializator = new JsonSerializer();
-    private static final Client client = Client.create();
 
     private enum Status {
-        NOT_STARTED, RUNNING, STOPPED;
+        RUNNING, STOPPED;
 
-        public boolean isRunning() {
+        private boolean isRunning() {
 
             return this == RUNNING;
         }
-
-        public boolean isStopped() {
-
-            return this == STOPPED;
-        }
     }
 
+    private final Client client;
     private final URL serviceDestination;
     private final String plannerName;
-    private Status status = Status.NOT_STARTED;
+    private Status status = Status.STOPPED;
 
     public RestPlanner(final URL serviceDestination) {
+
+        this(serviceDestination, Client.create());
+    }
+
+    public RestPlanner(final URL serviceDestination, final Client client) {
 
         if (serviceDestination == null) throw new IllegalArgumentException (
                 "No URL provided"
         );
 
+        this.client = client;
         this.serviceDestination = serviceDestination;
         this.plannerName = fetchPlannerName();
+    }
+
+    /**
+     * Validate URL
+     * @return Application name
+     * @throws PlannerException When not a drools planner
+     */
+    private String fetchPlannerName() {
+
+        final String info = infoContent();
+        final Matcher matcher = Pattern
+                .compile("^hudson-queue-planning : (.*?) on URL")
+                .matcher(info)
+        ;
+
+        final boolean valid = matcher.find();
+
+        if (!valid) throw new PlannerException("Not a drools planner: " + info);
+
+        return matcher.group(1);
+    }
+
+    private String infoContent() {
+
+        return get(
+                getResource("/info").accept(MediaType.TEXT_PLAIN),
+                "Cannot get remote planner info for " + serviceDestination.toString()
+        );
     }
 
     /**
@@ -95,38 +124,13 @@ public final class RestPlanner implements Planner {
     }
 
     /**
-     * Validate URL
-     * @return Application name or null when not a Drools planner
-     */
-    private String fetchPlannerName() {
-
-        final String info = infoContent();
-        final Matcher matcher = Pattern
-                .compile("^hudson-queue-planning : (.*?) on URL")
-                .matcher(info)
-        ;
-
-        final boolean valid = matcher.find();
-
-        if (!valid) throw new PlannerException("Not a drools planner: " + info);
-
-        return matcher.group();
-
-    }
-
-    private String infoContent() {
-
-        return get(getResource("/info").accept(MediaType.TEXT_PLAIN));
-    }
-
-    /**
      * @see org.jenkinsci.plugins.droolsplanner.Planner#score()
      */
     public int score() {
 
         assumeRunning();
 
-        info("Getting score");
+        LOGGER.info("Getting score");
         return serializator.extractScore(
                 get(getResource("/score").accept(TYPE))
         );
@@ -139,32 +143,50 @@ public final class RestPlanner implements Planner {
 
         assumeRunning();
 
-        info("Getting solution");
+        LOGGER.info("Getting solution");
         return serializator.extractAssignments(
                 get(getResource().accept(TYPE))
         );
     }
 
+    private void assumeRunning() {
+
+        if (!status.isRunning()) throw new IllegalStateException(
+                "Remote planner not running"
+        );
+    }
+
     private String get(final WebResource.Builder builder) {
 
+        return get(builder, null);
+    }
+
+    private String get(final WebResource.Builder builder, final String errorMessage) {
+
+        if (builder == null) throw new AssertionError("No builder provided");
+
+        Exception cause;
         try {
 
-            return builder.get(String.class);
+            final String response = builder.get(String.class);
+            LOGGER.info(response);
+            return response;
         } catch (UniformInterfaceException ex) {
 
-            throw new PlannerException(ex);
+            cause = ex;
         } catch (ClientHandlerException ex) {
 
-            throw new PlannerException(ex);
+            cause = ex;
         }
+
+        final String message = errorMessage != null ? errorMessage : cause.toString();
+        throw new PlannerException(message, cause);
     }
 
     /**
      * @see org.jenkinsci.plugins.droolsplanner.Planner#queue(org.jenkinsci.plugins.droolsplanner.StateProvider, org.jenkinsci.plugins.droolsplanner.NodeAssignments)
      */
-    public RestPlanner queue(final StateProvider stateProvider, final NodeAssignments assignments) {
-
-        assumeNotStopped();
+    public boolean queue(final StateProvider stateProvider, final NodeAssignments assignments) {
 
         if (assignments == null) throw new IllegalArgumentException("No assignments");
         if (stateProvider == null) throw new IllegalArgumentException("No stateProvider");
@@ -173,17 +195,26 @@ public final class RestPlanner implements Planner {
 
         final String queueString = serializator.buildQuery(stateProvider, assignments);
 
+        if (status.isRunning()) {
+
+            LOGGER.info("Sending queue update");
+            updateQueue(resource, queueString);
+        } else {
+
+            LOGGER.info("Starting remote planner");
+            sendQueue(resource, queueString);
+        }
+
+        return true;
+    }
+
+    private void sendQueue(final WebResource.Builder resource, final String queueString) {
+
         try {
-            if (status.isRunning()) {
 
-                info("Sending queue update");
-                resource.put(queueString);
-            } else {
-
-                info("Starting remote planner");
-                resource.post(queueString);
-                status = Status.RUNNING;
-            }
+            LOGGER.info(queueString);
+            resource.post(queueString);
+            status = Status.RUNNING;
         } catch (UniformInterfaceException ex) {
 
             throw new PlannerException(ex);
@@ -191,8 +222,18 @@ public final class RestPlanner implements Planner {
 
             throw new PlannerException(ex);
         }
+    }
 
-        return this;
+    private void updateQueue(final WebResource.Builder resource, final String queueString) {
+
+        try {
+
+            LOGGER.info(queueString);
+            resource.put(queueString);
+        } catch (UniformInterfaceException ex) {
+
+            sendQueue(resource, queueString);
+        }
     }
 
     /**
@@ -200,18 +241,15 @@ public final class RestPlanner implements Planner {
      */
     public Planner stop() {
 
-        if (status.isStopped()) {
+        if (!status.isRunning()) {
 
-            error(String.format(
+            LOGGER.severe(String.format(
                     "Planner %s already stopped", serviceDestination.toString()
             ));
             return this;
         }
 
-        if (status.isRunning()) {
-
-            info("Stopping remote planner");
-        }
+        LOGGER.info("Stopping remote planner " + serviceDestination.toString());
 
         status = Status.STOPPED;
         try {
@@ -251,43 +289,5 @@ public final class RestPlanner implements Planner {
                     serviceDestination.toString() + PREFIX + url + ": " + ex.getMessage()
             );
         }
-    }
-
-    private void assumeRunning() {
-
-        if (!status.isRunning()) throw new IllegalStateException(
-                "Remote planner not running"
-        );
-    }
-
-    private void assumeNotStopped() {
-
-        if (status.isStopped()) throw new IllegalStateException(
-                "Remote planner already stopped"
-        );
-    }
-
-    private void info(final String message) {
-
-        LOGGER.info(message);
-    }
-
-    private void error(final String message) {
-
-        LOGGER.severe(message);
-    }
-
-    /**
-     * Validate postconditions
-     */
-    protected void finalize() throws Throwable {
-
-        if (!status.isRunning()) return;
-
-        error(String.format(
-                "Planner %s was not stopped properlly", serviceDestination.toString()
-        ));
-
-        stop();
     }
 }

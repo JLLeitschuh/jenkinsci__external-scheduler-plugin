@@ -45,12 +45,6 @@ import net.sf.json.util.JSONStringer;
 public final class JsonSerializer {
 
     /**
-     * Avoid confusion translating "" to "master" and back.
-     */
-    private static final String MASTER_NAME_OUTER = "master";
-    private static final String MASTER_NAME_INNER = "";
-
-    /**
      * Extract int from score message
      *
      * @param score JSON score
@@ -76,13 +70,7 @@ public final class JsonSerializer {
 
             final JSONObject item = (JSONObject) o;
 
-            String nodeName = item.getString("node");
-            if (nodeName.equals(MASTER_NAME_OUTER)) {
-
-                nodeName = MASTER_NAME_INNER;
-            }
-
-            builder.assign(item.getInt("id"), nodeName);
+            builder.assign(item.getInt("id"), item.getString("node"));
         }
 
         return builder.build();
@@ -194,7 +182,7 @@ public final class JsonSerializer {
             if (label != null) {
 
                 final Set<Node> nodes = label.getNodes();
-                if (nodes != null && !nodes.isEmpty()) return nodes;
+                if (nodes != null) return nodes;
             }
 
             return stateProvider.getNodes();
@@ -202,14 +190,7 @@ public final class JsonSerializer {
 
         private String getName(final Node node) {
 
-            String nodeName = node.getNodeName();
-
-            if (MASTER_NAME_INNER.equals(nodeName)) {
-
-                nodeName = MASTER_NAME_OUTER;
-            }
-
-            return nodeName;
+            return node.getSelfLabel().toString();
         }
     }
 }

@@ -34,4 +34,9 @@ public class PlannerException extends RuntimeException {
 
         super(message);
     }
+
+    public PlannerException(final String message, final Throwable cause) {
+
+        super(message, cause);
+    }
 }

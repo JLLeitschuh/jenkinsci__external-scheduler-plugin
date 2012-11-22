@@ -23,106 +23,57 @@
  */
 package org.jenkinsci.plugins.droolsplanner;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.lessThanOrEqualTo;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
-import hudson.model.Node;
-import hudson.model.Queue;
+import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.SortedSet;
 
-import org.junit.After;
+import javax.ws.rs.core.MediaType;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.WebResource;
+
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(Node.class)
+@PrepareForTest(URL.class)
 public class RestPlannerTest {
 
-    private static final String SERVICE = "http://hudsonqueueplanning-ogondza.rhcloud.com/";
+    private URL serviceUrl;
+    private Client client;
 
-    private final NodeAssignments assignments = NodeAssignments.builder()
-            .assign(2, "get_assigned_solution")
-            .build()
-    ;
-
-    private final NodeMockFactory nodeFactory = new NodeMockFactory();
-
-    private final List<Node> nodes = new ArrayList<Node>();
-
-    private Planner pp;
+    private RestPlanner pp;
 
     @Before
-    public void setUp() throws MalformedURLException {
+    public void setUp() throws MalformedURLException, InterruptedException {
 
-        pp = new RestPlanner(new URL(SERVICE));
+        client = mock(Client.class);
+
+        serviceUrl = mock(URL.class);
+        when(serviceUrl.toString()).thenReturn("Fake url");
+
+        useMeaningFullInfo();
+
+        pp = new RestPlanner(serviceUrl, client);
     }
 
-    @After
-    public void tearDown() {
+    private void useMeaningFullInfo() {
 
-        pp.stop();
-    }
+        WebResource r = mock(WebResource.class);
+        WebResource.Builder rb = mock(WebResource.Builder.class);
+        when(r.accept(MediaType.TEXT_PLAIN)).thenReturn(rb);
 
-    private Queue.Item getItem(final Set<Node> nodeSet) {
+        when(client.resource(Mockito.endsWith("/info"))).thenReturn(r);
 
-        return ItemMock.create(
-                nodeSet, 2, "Single queue item", 3
-        );
-    }
-
-    @Test
-    public void getSolution() {
-
-        final List<Queue.Item> items = ItemMock.list();
-        items.add(getItem(getNodeSet("get_solution", 2, 1)));
-
-        pp.queue(new StateProviderMock(items, nodes), assignments);
-
-        validateScore(pp.score());
-
-        NodeAssignments assignments = pp.solution();
-        assertThat(assignments.nodeName(1), nullValue());
-        assertThat(assignments.nodeName(2), notNullValue());
-    }
-
-    @Test
-    public void getAssignedSolution() {
-
-        final List<Queue.Item> items = ItemMock.list();
-        items.add(getItem(getNodeSet("get_assigned_solution", 2, 1)));
-
-        pp.queue(new StateProviderMock(items, nodes), assignments);
-
-        validateScore(pp.score());
-
-        NodeAssignments assignments = pp.solution();
-        assertThat(assignments.nodeName(1), nullValue());
-        assertThat(assignments.nodeName(2), equalTo("get_assigned_solution"));
-    }
-
-    /**
-     * Test updating the queue several times and picking up the solution
-     */
-    @Test
-    public void getReassignedSolution() {
-
-        getSolution();
-        getAssignedSolution();
-        getSolution();
-        getAssignedSolution();
+        when(rb.get(String.class)).thenReturn("hudson-queue-planning : Planner Mock on URL planer.mock.localhost");
     }
 
     @Test(expected = IllegalStateException.class)
@@ -151,13 +102,6 @@ public class RestPlannerTest {
         pp.solution();
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void sendQueueToStopped() {
-
-        pp.stop();
-        pp.queue(null, null);
-    }
-
     @Test(expected = IllegalArgumentException.class)
     public void getInstanctWithoutUrl() {
 
@@ -167,23 +111,12 @@ public class RestPlannerTest {
     @Test
     public void getUrl() throws MalformedURLException {
 
-        final URL url = new URL(SERVICE);
-        final Planner planner = new RestPlanner(url);
-
-        assertSame(url, planner.remoteUrl());
+        assertSame(serviceUrl, pp.remoteUrl());
     }
 
-    private SortedSet<Node> getNodeSet(String name, int executors, int freeexecutors) {
+    @Test
+    public void checkName() {
 
-        final SortedSet<Node> set = nodeFactory.set();
-        set.add(nodeFactory.node(name, executors, freeexecutors));
-
-        return set;
-    }
-
-    private void validateScore(final int score) {
-
-        assertThat(score, greaterThanOrEqualTo(0));
-        assertThat(score, lessThanOrEqualTo(1));
+        assertEquals( "Planner Mock", pp.name() );
     }
 }

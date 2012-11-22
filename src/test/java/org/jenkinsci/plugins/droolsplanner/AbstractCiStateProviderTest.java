@@ -46,18 +46,22 @@ import org.powermock.modules.junit4.PowerMockRunner;
 @PrepareForTest({Node.class})
 public class AbstractCiStateProviderTest {
 
-    private Computer offlineComputer;
     private AbstractCIBase jenkins;
+
     private Computer onlineComputer;
+    private Computer offlineComputer;
+    private Computer notAcceptingComputer;
 
     @Before
     public void setUp() {
 
         offlineComputer = mock(Computer.class);
         when(offlineComputer.isOffline()).thenReturn(true);
+        when(offlineComputer.isAcceptingTasks()).thenReturn(true);
 
         onlineComputer = mock(Computer.class);
         when(onlineComputer.isOffline()).thenReturn(false);
+        when(onlineComputer.isAcceptingTasks()).thenReturn(true);
 
         jenkins = mock(AbstractCIBase.class);
         when(jenkins.toComputer()).thenReturn(onlineComputer);
@@ -83,15 +87,27 @@ public class AbstractCiStateProviderTest {
     public void getNodes() {
 
         final Node slave = node();
-        final Node offlineSlave = node();
+
         final Node noComputerSlave = node();
-
-        when(offlineSlave.toComputer()).thenReturn(offlineComputer);
-        when(offlineComputer.isOffline()).thenReturn(true);
-
         when(noComputerSlave.toComputer()).thenReturn(null);
 
-        usingNodes(jenkins, offlineSlave, noComputerSlave, slave);
+        final Node offlineSlave = node();
+        when(offlineSlave.toComputer()).thenReturn(offlineComputer);
+
+        final Node notAcceptingSlave = node();
+        final Computer notAcceptingComputer = mock(Computer.class);
+        when(notAcceptingComputer.isOffline()).thenReturn(false);
+        when(notAcceptingComputer.isAcceptingTasks()).thenReturn(false);
+        when(notAcceptingSlave.toComputer()).thenReturn(notAcceptingComputer);
+
+        final Node nihilisticSlave = node();
+        final Computer nihilisticComputer = mock(Computer.class);
+        when(nihilisticComputer.isOffline()).thenReturn(true);
+        when(nihilisticComputer.isAcceptingTasks()).thenReturn(false);
+        when(nihilisticSlave.toComputer()).thenReturn(nihilisticComputer);
+
+
+        usingNodes(jenkins, nihilisticSlave, offlineSlave, noComputerSlave, slave, notAcceptingSlave);
 
         final List<Node> nodes = new AbstractCiStateProvider(jenkins).getNodes();
 

@@ -25,6 +25,7 @@ package org.jenkinsci.plugins.droolsplanner;
 
 import hudson.model.Computer;
 import hudson.model.Node;
+import hudson.model.labels.LabelAtom;
 
 import java.util.Comparator;
 import java.util.SortedSet;
@@ -55,7 +56,7 @@ class NodeMockFactory {
         final Node node = PowerMockito.mock(Node.class);
 
         PowerMockito.when(node.getDisplayName()).thenReturn(name);
-        PowerMockito.when(node.getNodeName()).thenReturn(name);
+        PowerMockito.when(node.getSelfLabel()).thenReturn(new LabelAtom(name));
         PowerMockito.when(node.getNumExecutors()).thenReturn(executors);
         PowerMockito.when(node.toComputer()).thenReturn(computer);
 
