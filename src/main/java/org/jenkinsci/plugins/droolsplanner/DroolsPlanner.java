@@ -130,7 +130,6 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
     @Extension
     public static class DescriptorImpl extends Descriptor<DroolsPlanner> {
 
-        private transient RestPlanner planner;
         private static DroolsPlanner droolsPlanner = new DroolsPlanner ();
 
         private String serverUrl;
@@ -138,7 +137,53 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
         public DescriptorImpl() {
 
             load();
-            droolsPlanner.planner = getPlanner();
+            droolsPlanner.planner = getPlanner(null);
+        }
+
+        /**
+         * Get planner based on existing configuration or null when not possible
+         */
+        private RestPlanner getPlanner(final RestPlanner planner) {
+
+            try {
+
+                return reloadPlanner(planner);
+            } catch (PlannerException ex) {
+
+                LOGGER.log(Level.INFO, "Drools queue planner not responding. Using default planner.", ex);
+                return null;
+            }
+        }
+
+        private RestPlanner reloadPlanner(final RestPlanner planner) {
+
+            if (serverUrl == null) return null;
+
+            final URL url = getUrl(serverUrl);
+
+            if (url == null) return null;
+
+            if (planner != null) {
+
+                // Do not create new planner for the same url
+                if (url.equals(planner.remoteUrl())) return null;
+
+                // Stop the planner in case we are starting another
+                planner.stop();
+
+                // Erase the reference not to use stopped planner in case new
+                // configuration will fail to initialize
+                //planner = null;
+            }
+
+            LOGGER.log(Level.INFO, "Attaching remote drools queue planner.");
+            final RestPlanner newPlanner = new RestPlanner(url);
+            newPlanner.queue(
+                    droolsPlanner.stateProvider(),
+                    NodeAssignments.empty()
+            );
+
+            return newPlanner;
         }
 
         @Override
@@ -150,33 +195,6 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
         public String getServerUrl() {
 
             return serverUrl;
-        }
-
-        private URL getUrl(final String serverUrl) {
-
-            try {
-
-                return new URL(serverUrl);
-            } catch (MalformedURLException ex) {
-
-                return null;
-            }
-        }
-
-        public RestPlanner getPlanner() {
-
-            if (planner != null) return planner;
-
-            try {
-
-                reloadPlanner();
-            } catch (PlannerException ex) {
-
-                // Thrown if and only if getting planner for invalid URL.
-                // This exception was already handled upon configuration change.
-            }
-
-            return planner;
         }
 
         @Override
@@ -193,44 +211,20 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
 
             save();
 
-            try {
-
-                reloadPlanner();
-            } catch (PlannerException ex) {
-
-                LOGGER.log(Level.INFO, "Drools queue planner not responding. Switching to default planner.", ex);
-            }
+            droolsPlanner.planner = getPlanner(droolsPlanner.planner);
 
             return true;
         }
 
-        private void reloadPlanner() {
+        private URL getUrl(final String serverUrl) {
 
-            if (serverUrl == null) return;
+            try {
 
-            final URL url = getUrl(serverUrl);
+                return new URL(serverUrl);
+            } catch (MalformedURLException ex) {
 
-            if (url == null) return;
-
-            if (planner != null) {
-
-                // Do not create new planner for the same url
-                if (url.equals(planner.remoteUrl())) return;
-
-                // Stop the planner in case we are starting another
-                planner.stop();
-
-                // Erase the reference not to use stopped planner in case new
-                // configuration will fail to initialize
-                planner = null;
+                return null;
             }
-
-            LOGGER.log(Level.INFO, "Attaching remote drools queue planner");
-            droolsPlanner.planner = planner = new RestPlanner(url);
-            droolsPlanner.planner.queue(
-                    droolsPlanner.stateProvider(),
-                    NodeAssignments.empty()
-             );
         }
 
         public FormValidation doCheckServerUrl(@QueryParameter String serverUrl) {
