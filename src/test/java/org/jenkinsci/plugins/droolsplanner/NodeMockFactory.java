@@ -23,8 +23,11 @@
  */
 package org.jenkinsci.plugins.droolsplanner;
 
+import static org.mockito.Matchers.any;
 import hudson.model.Computer;
 import hudson.model.Node;
+import hudson.model.Node.Mode;
+import hudson.model.Queue;
 import hudson.model.labels.LabelAtom;
 
 import java.util.Comparator;
@@ -59,6 +62,8 @@ class NodeMockFactory {
         PowerMockito.when(node.getSelfLabel()).thenReturn(new LabelAtom(name));
         PowerMockito.when(node.getNumExecutors()).thenReturn(executors);
         PowerMockito.when(node.toComputer()).thenReturn(computer);
+        PowerMockito.when(node.canTake(any(Queue.BuildableItem.class))).thenReturn(null);
+        PowerMockito.when(node.getMode()).thenReturn(Mode.NORMAL);
 
         PowerMockito.when(computer.countIdle()).thenReturn(freeExecutors);
 

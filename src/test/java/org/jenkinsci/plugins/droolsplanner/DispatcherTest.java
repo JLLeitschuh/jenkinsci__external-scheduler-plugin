@@ -85,7 +85,7 @@ public class DispatcherTest {
 
     private void notConnected() {
 
-        Mockito.when(planner.isActive()).thenReturn(false);
+        Mockito.when(planner.assumeActive()).thenReturn(false);
     }
 
     @Test

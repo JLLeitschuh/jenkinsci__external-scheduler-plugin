@@ -61,7 +61,7 @@ public class RestPlannerIntegrationTest {
     public static final String URL_PROPERTY = "integration.remote.url";
 
     private final NodeAssignments assignments = NodeAssignments.builder()
-            .assign(2, "get_assigned_solution")
+            .assign(2, "assigned_solution")
             .build()
     ;
 
@@ -113,7 +113,7 @@ public class RestPlannerIntegrationTest {
 
         final List<Queue.Item> items = ItemMock.list();
 
-        final Set<Node> nodeSet = getNodeSet("get_solution", 2, 2);
+        final Set<Node> nodeSet = getNodeSet("assigned_solution", 2, 2);
 
         items.add(ItemMock.create(nodeSet, 2, "First", 3));
         items.add(ItemMock.create(nodeSet, 3, "Second", 3));
@@ -126,8 +126,8 @@ public class RestPlannerIntegrationTest {
 
         NodeAssignments assignments = pp.solution();
 
-        assertThat(assignments.nodeName(2), equalTo("get_solution"));
-        assertThat(assignments.nodeName(3), equalTo("get_solution"));
+        assertThat(assignments.nodeName(2), equalTo("assigned_solution"));
+        assertThat(assignments.nodeName(3), equalTo("assigned_solution"));
     }
 
     @Test
@@ -175,6 +175,48 @@ public class RestPlannerIntegrationTest {
         getAssignedSolution();
         getSolution();
         getAssignedSolution();
+    }
+
+    @Test
+    public void prioritizeOldestBuildOfAJobByTime() throws InterruptedException {
+
+        final Set<Node> master = getNodeSet("master", 1, 1);
+
+        assertAssignedOlder(
+                master,
+                ItemMock.create(master, 1, "job", 0),
+                ItemMock.create(master, 2, "job", 1)
+        );
+    }
+
+    @Test
+    public void prioritizeOldestBuildOfAJobById() throws InterruptedException {
+
+        final Set<Node> master = getNodeSet("master", 1, 1);
+
+        assertAssignedOlder(
+                master,
+                ItemMock.create(master, 1, "job", 0),
+                ItemMock.create(master, 2, "job", 0)
+        );
+    }
+
+    private void assertAssignedOlder(
+            final Set<Node> nodes, final Queue.Item older, final Queue.Item newer
+    ) throws InterruptedException {
+
+        final List<Queue.Item> items = ItemMock.list();
+        items.add(older);
+        items.add(newer);
+
+        pp.queue(new StateProviderMock(items, new ArrayList<Node> (nodes)), NodeAssignments.empty());
+
+        Thread.sleep(1000);
+
+        final NodeAssignments assignments = pp.solution();
+        assertThat(assignments.nodeName(older), equalTo("master"));
+        assertThat(assignments.nodeName(newer), nullValue());
+        assertThat(pp.score(), equalTo(1));
     }
 
     private Queue.Item getItem(final Set<Node> nodeSet) {

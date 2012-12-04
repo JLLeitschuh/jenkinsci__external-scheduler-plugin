@@ -30,10 +30,10 @@ import java.util.List;
 
 public class StateProviderMock implements StateProvider {
 
-    private final List<Queue.Item> queue;
+    private final List<? extends Queue.Item> queue;
     private final List<Node> nodes;
 
-    public StateProviderMock(final List<Queue.Item> queue, final List<Node> nodes) {
+    public StateProviderMock(final List<? extends Queue.Item> queue, final List<Node> nodes) {
 
         this.queue = queue;
         this.nodes = nodes;

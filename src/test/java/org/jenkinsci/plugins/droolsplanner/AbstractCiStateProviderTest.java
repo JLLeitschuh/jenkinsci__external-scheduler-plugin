@@ -151,24 +151,6 @@ public class AbstractCiStateProviderTest {
         return items;
     }
 
-    @Test
-    public void delegateEqualsHashCode() {
-
-        final Node slave1 = node();
-        final Node slave2 = node();
-        final Queue.Item item1 = mock(Queue.Item.class);
-        final Queue.Item item2 = mock(Queue.Item.class);
-
-        usingNodes(jenkins, slave1, slave2);
-        usingQueue(jenkins, item1, item2);
-
-        final StateProvider sp1 = new AbstractCiStateProvider(jenkins);
-        final StateProvider sp2 = new AbstractCiStateProvider(jenkins);
-
-        assertEquals(sp1.hashCode(), sp2.hashCode());
-        assertEquals(sp1, sp2);
-    }
-
     private Node node() {
 
         final Node node = mock(Node.class);

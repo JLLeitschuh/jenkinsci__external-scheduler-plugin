@@ -87,28 +87,4 @@ public class AbstractCiStateProvider implements StateProvider {
 
         return Arrays.asList(base.getQueue().getItems());
     }
-
-    @Override
-    public boolean equals(final Object rhs) {
-
-        if (rhs == null) return false;
-
-        if (this == rhs) return true;
-
-        if (!this.getClass().equals(rhs.getClass())) return false;
-
-        final AbstractCiStateProvider otherProvider = (AbstractCiStateProvider) rhs;
-
-        if (this.base == otherProvider.base) return true;
-
-        return getNodes().equals(otherProvider.getNodes())
-                && getQueue().equals(otherProvider.getQueue())
-        ;
-    }
-
-    @Override
-    public int hashCode() {
-
-        return 31 * getNodes().hashCode() + getQueue().hashCode() + 7;
-    }
 }

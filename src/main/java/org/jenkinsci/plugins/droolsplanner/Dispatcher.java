@@ -73,12 +73,7 @@ public class Dispatcher extends QueueTaskDispatcher {
 
         if (solution == null) return true;
 
-        return node.getSelfLabel().toString().equals(nodeName(solution, item));
-    }
-
-    private String nodeName(final NodeAssignments solution, final Queue.Item item) {
-
-        return solution.nodeName(item);
+        return node.getSelfLabel().toString().equals(solution.nodeName(item));
     }
 
     private void logStatus(final boolean status, String message) {

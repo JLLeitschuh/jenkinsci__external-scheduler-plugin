@@ -21,12 +21,8 @@ public class RemoteUpdater extends PeriodicWork {
     @Override
     protected void doRun() throws Exception {
 
-        final boolean updated = planner.sendQueue();
-
-        if (!updated) {
-
-            planner.fetchSolution();
-        }
+        planner.fetchSolution();
+        planner.sendQueue();
     }
 
     @Override

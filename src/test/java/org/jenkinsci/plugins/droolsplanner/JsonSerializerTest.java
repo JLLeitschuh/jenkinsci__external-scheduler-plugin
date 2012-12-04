@@ -24,13 +24,22 @@
 package org.jenkinsci.plugins.droolsplanner;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.when;
 import hudson.model.Node;
 import hudson.model.Queue;
+import hudson.model.queue.CauseOfBlockage;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
+
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,7 +47,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(Node.class)
+@PrepareForTest({Node.class, Queue.WaitingItem.class})
 public class JsonSerializerTest {
 
     private static final JsonSerializer SERIALIZER = new JsonSerializer();
@@ -153,5 +162,44 @@ public class JsonSerializerTest {
         items.add(ItemMock.create(null, 2, "Unlabeled item", 3));
 
         return items;
+    }
+
+    @Test
+    public void testExclusiveNode() {
+
+        final Node regular = nodeFactory.node("regular", 1, 1);
+        final Node exclusive = mock(Node.class);
+        when(exclusive.canTake(any(Queue.BuildableItem.class)))
+            .thenReturn(new CauseOfBlockage() {
+
+                @Override
+                public String getShortDescription() {
+                    return "COB";
+                }
+            })
+        ;
+
+        nodes.add(regular);
+        nodes.add(exclusive);
+
+        final Queue.Item item = ItemMock.create(
+                new HashSet<Node>(nodes), 42, "item", 1
+        );
+
+        final String actual = SERIALIZER.buildQuery(
+                new StateProviderMock(Arrays.asList(item), nodes),
+                NodeAssignments.empty()
+        );
+
+        final JSONObject json = JSONObject.fromObject(actual);
+        final JSONArray nodes = json.getJSONArray("queue")
+                .getJSONObject(0)
+                .getJSONArray("nodes")
+        ;
+
+        assertEquals(1, nodes.size());
+
+        final String nodeName = nodes.getJSONObject(0).getString("name");
+        assertEquals("regular", nodeName);
     }
 }

@@ -58,14 +58,21 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
     /**
      * Does Drools Based Queue Planner plugin intercept Jenkins queue scheduling
      */
-    public boolean isActive() {
+    public boolean assumeActive() {
 
-        return planner != null;
+        if (planner != null) return true;
+
+        // Get descriptor in case it was not instantiated yet to have planner injected
+        getDescriptor();
+        if (planner != null) return true;
+
+        LOGGER.info("Drools planner not active");
+        return false;
     }
 
     public NodeAssignments currentSolution() {
 
-        if (!isActive()) return null;
+        if (!assumeActive()) return null;
 
         if (solution != null) return solution;
 
@@ -79,7 +86,7 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
      */
     public NodeAssignments fetchSolution() {
 
-        if (!isActive()) return null;
+        if (!assumeActive()) return null;
 
         return this.solution = planner.solution();
     }
@@ -91,24 +98,9 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
      */
     public boolean sendQueue() {
 
-        if (!isActive()) return false;
+        if (!assumeActive()) return false;
 
-        final Long currentState = fingerprint(stateProvider(), currentSolution());
-
-        if (currentState.equals(lastState)) return false;
-
-        lastState = currentState;
         return planner.queue(stateProvider(), currentSolution());
-    }
-
-    private Long fingerprint(
-            final StateProvider stateProvider,
-            final NodeAssignments assignments
-    ) {
-
-        return new Long(
-                stateProvider.hashCode() << 32 + assignments.hashCode()
-        );
     }
 
     private StateProvider stateProvider() {
@@ -130,7 +122,7 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
     @Extension
     public static class DescriptorImpl extends Descriptor<DroolsPlanner> {
 
-        private static DroolsPlanner droolsPlanner = new DroolsPlanner ();
+        private static DroolsPlanner droolsPlanner = new DroolsPlanner();
 
         private String serverUrl;
 

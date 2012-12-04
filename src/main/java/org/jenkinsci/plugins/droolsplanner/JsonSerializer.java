@@ -28,6 +28,7 @@ import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.Queue;
 
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -134,7 +135,10 @@ public final class JsonSerializer {
 
                 builder.key("id").value(item.id);
                 builder.key("priority").value(priority(item));
+
                 builder.key("inQueueSince").value(item.getInQueueSince());
+//                builder.key("inQueueSince").value(new java.util.Date().getTime());
+
                 builder.key("name").value(item.task.getDisplayName());
 
                 builder.key("nodes").array();
@@ -158,6 +162,8 @@ public final class JsonSerializer {
 
             for (final Node node: getUsableNodes(item)) {
 
+                if (!isNodeApplicable(item, node)) continue;
+
                 final Computer computer = node.toComputer();
                 final int freeExecutors = (computer == null)
                         ? 0
@@ -172,6 +178,31 @@ public final class JsonSerializer {
 
                 builder.endObject();
             }
+        }
+
+        private boolean isNodeApplicable(Queue.Item item, final Node node) {
+
+            Queue.BuildableItem buildableItem = null;
+
+            if (item.getClass().equals(Queue.Item.class)) {
+
+                item = new Queue.WaitingItem(
+                        Calendar.getInstance(), item.task, item.getActions()
+                );
+            }
+
+            if (item instanceof Queue.WaitingItem) {
+
+                buildableItem = new Queue.BuildableItem((Queue.WaitingItem) item);
+            } else if (item instanceof Queue.NotWaitingItem) {
+
+                buildableItem = new Queue.BuildableItem((Queue.NotWaitingItem) item);
+            } else if (item instanceof Queue.BuildableItem) {
+
+                buildableItem = (Queue.BuildableItem) item;
+            }
+
+            return node.canTake(buildableItem) == null;
         }
 
 
