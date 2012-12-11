@@ -23,6 +23,7 @@
  */
 package org.jenkinsci.plugins.droolsplanner;
 
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.mock;
 
@@ -59,5 +60,14 @@ public class RemoteUpdaterTest {
     public void doNotInstantiateWithoutDescriptor() {
 
         new RemoteUpdater(null);
+    }
+
+    @Test
+    public void fetchAndSend() throws Exception {
+
+        updater.doRun();
+
+        verify(droolsPlanner).sendQueue();
+        verify(droolsPlanner).fetchSolution();
     }
 }

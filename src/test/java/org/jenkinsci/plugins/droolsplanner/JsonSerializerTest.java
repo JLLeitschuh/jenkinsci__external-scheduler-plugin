@@ -67,7 +67,7 @@ public class JsonSerializerTest {
 
         assertEquals(2, assignments.size());
         assertEquals("vmg77-Win2k3-x86_64", assignments.nodeName(1));
-        assertEquals("not-assigned", assignments.nodeName(2));
+        assertEquals(null, assignments.nodeName(2));
     }
 
     @Test

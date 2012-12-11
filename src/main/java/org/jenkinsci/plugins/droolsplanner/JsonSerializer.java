@@ -45,6 +45,8 @@ import net.sf.json.util.JSONStringer;
  */
 public final class JsonSerializer {
 
+    private static final String NOT_ASSIGNED = "not-assigned";
+
     /**
      * Extract int from score message
      *
@@ -71,10 +73,21 @@ public final class JsonSerializer {
 
             final JSONObject item = (JSONObject) o;
 
-            builder.assign(item.getInt("id"), item.getString("node"));
+            builder.assign(
+                    item.getInt("id"),
+                    deserilizeNodeName(item.getString("node"))
+            );
         }
 
         return builder.build();
+    }
+
+    private String deserilizeNodeName(final String jsonNodeName) {
+
+        return NOT_ASSIGNED.equals(jsonNodeName)
+                ? null
+                : jsonNodeName
+        ;
     }
 
     /**

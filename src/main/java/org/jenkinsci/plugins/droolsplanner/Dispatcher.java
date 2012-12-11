@@ -58,22 +58,24 @@ public class Dispatcher extends QueueTaskDispatcher {
 
     public CauseOfBlockage canTake(final Node node, final BuildableItem item) {
 
-        final boolean assignedToNode = assignedToNode(node, item);
-        logStatus(assignedToNode, "assigning " + itemName(item) + " to " + node.getSelfLabel());
-
-        return assignedToNode
+        return assignToNode(node, item)
                 ? null
                 : notAssignedToNode(node, item)
         ;
     }
 
-    private boolean assignedToNode(final Node node, final BuildableItem item) {
+    private boolean assignToNode(final Node node, final BuildableItem item) {
 
         final NodeAssignments solution = planner.currentSolution();
 
+        // Planner disabled
         if (solution == null) return true;
 
-        return node.getSelfLabel().toString().equals(solution.nodeName(item));
+        final boolean assigned = node.getSelfLabel().toString().equals(solution.nodeName(item));
+
+        logStatus(assigned, "assigning " + itemName(item) + " to " + node.getSelfLabel());
+
+        return assigned;
     }
 
     private void logStatus(final boolean status, String message) {
@@ -88,18 +90,13 @@ public class Dispatcher extends QueueTaskDispatcher {
 
     private CauseOfBlockage notAssignedToNode(final Node node, final BuildableItem item) {
 
-        return cause(item.toString(), node.toString());
-    }
-
-    private CauseOfBlockage cause(final String item, final String node) {
-
         return new CauseOfBlockage() {
 
             @Override
             public String getShortDescription() {
 
                 return String.format(
-                        "Drools Planner decided not to assign %s to %s", item, node
+                        "Drools Planner decided not to assign %s to %s", item.toString(), node.toString()
                 );
             }
         };

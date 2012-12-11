@@ -216,7 +216,6 @@ public class RestPlannerIntegrationTest {
         final NodeAssignments assignments = pp.solution();
         assertThat(assignments.nodeName(older), equalTo("master"));
         assertThat(assignments.nodeName(newer), nullValue());
-        assertThat(pp.score(), equalTo(1));
     }
 
     private Queue.Item getItem(final Set<Node> nodeSet) {
