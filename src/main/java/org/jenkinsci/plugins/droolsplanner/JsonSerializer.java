@@ -28,10 +28,9 @@ import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.Queue;
 
-import java.util.Calendar;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -131,18 +130,14 @@ public final class JsonSerializer {
 
             builder.object().key("queue").array();
 
-            queue(stateProvider);
+            queue();
 
             return builder.endArray().endObject();
         }
 
-        private void queue(final StateProvider stateProvider) {
+        private void queue() {
 
-            final List<? extends Queue.Item> queue = stateProvider.getQueue();
-
-            if (queue == null) return;
-
-            for (final Queue.Item item : queue) {
+            for (final Queue.BuildableItem item : stateProvider.getQueue()) {
 
                 builder.object();
 
@@ -150,86 +145,89 @@ public final class JsonSerializer {
                 builder.key("priority").value(priority(item));
 
                 builder.key("inQueueSince").value(item.getInQueueSince());
-//                builder.key("inQueueSince").value(new java.util.Date().getTime());
 
                 builder.key("name").value(item.task.getDisplayName());
 
-                builder.key("nodes").array();
+                builder.key("nodes");
 
-                nodes(item);
+                final List<Node> usableNodes = assignableNodes(item);
+                nodes(item, usableNodes);
 
-                builder.endArray();
-
-                builder.key("assigned").value(assignments.nodeName(item));
+                builder.key("assigned").value(assignedNode(item, usableNodes));
 
                 builder.endObject();
             }
         }
 
-        private int priority(final Queue.Item item) {
+        private int priority(final Queue.BuildableItem item) {
 
             return 50;
         }
 
-        private void nodes(final Queue.Item item) {
+        private void nodes(final Queue.BuildableItem item, final Collection<Node> nodes) {
 
-            for (final Node node: getUsableNodes(item)) {
+            builder.array();
 
-                if (!isNodeApplicable(item, node)) continue;
-
-                final Computer computer = node.toComputer();
-                final int freeExecutors = (computer == null)
-                        ? 0
-                        : computer.countIdle()
-                ;
+            for (final Node node: nodes) {
 
                 builder.object();
 
                 builder.key("name").value(getName(node));
+
                 builder.key("executors").value(node.getNumExecutors());
+
+                final int freeExecutors = node.toComputer().countIdle();
                 builder.key("freeExecutors").value(freeExecutors);
 
                 builder.endObject();
             }
+
+            builder.endArray();
         }
 
-        private boolean isNodeApplicable(Queue.Item item, final Node node) {
-
-            Queue.BuildableItem buildableItem = null;
-
-            if (item.getClass().equals(Queue.Item.class)) {
-
-                item = new Queue.WaitingItem(
-                        Calendar.getInstance(), item.task, item.getActions()
-                );
-            }
-
-            if (item instanceof Queue.WaitingItem) {
-
-                buildableItem = new Queue.BuildableItem((Queue.WaitingItem) item);
-            } else if (item instanceof Queue.NotWaitingItem) {
-
-                buildableItem = new Queue.BuildableItem((Queue.NotWaitingItem) item);
-            } else if (item instanceof Queue.BuildableItem) {
-
-                buildableItem = (Queue.BuildableItem) item;
-            }
-
-            return node.canTake(buildableItem) == null;
-        }
-
-
-        private Collection<Node> getUsableNodes(final Queue.Item item) {
+        private List<Node> assignableNodes(final Queue.BuildableItem item) {
 
             final Label label = item.getAssignedLabel();
 
-            if (label != null) {
+            final Collection<Node> nodeCandidates = (label != null && label.getNodes() != null)
+                    ? label.getNodes()
+                    : stateProvider.getNodes()
+            ;
 
-                final Set<Node> nodes = label.getNodes();
-                if (nodes != null) return nodes;
+            final List<Node> nodes = new ArrayList<Node>(nodeCandidates.size());
+            for(final Node node: nodeCandidates) {
+
+                if (nodeApplicable(item, node)) {
+
+                    nodes.add(node);
+                }
             }
 
-            return stateProvider.getNodes();
+            return nodes;
+        }
+
+        private boolean nodeApplicable(Queue.BuildableItem item, final Node node) {
+
+            return isOnline(node) && node.canTake(item) == null;
+        }
+
+        private boolean isOnline(final Node node) {
+
+            final Computer computer = node.toComputer();
+            return computer != null && !computer.isOffline() && computer.isAcceptingTasks();
+        }
+
+        private String assignedNode(final Queue.BuildableItem item, final List<Node> nodes) {
+
+            final String assignedTo = assignments.nodeName(item);
+
+            for (final Node node: nodes) {
+
+                if (getName(node).equals(assignedTo)) return assignedTo;
+            }
+
+            // currently assigned node is no longer assignable
+            return null;
         }
 
         private String getName(final Node node) {

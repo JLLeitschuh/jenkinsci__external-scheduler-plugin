@@ -28,18 +28,20 @@ import hudson.model.Queue;
 
 import java.util.List;
 
+import org.apache.commons.lang.NotImplementedException;
+
 public class StateProviderMock implements StateProvider {
 
-    private final List<? extends Queue.Item> queue;
+    private final List<Queue.BuildableItem> queue;
     private final List<Node> nodes;
 
-    public StateProviderMock(final List<? extends Queue.Item> queue, final List<Node> nodes) {
+    public StateProviderMock(final List<Queue.BuildableItem> queue, final List<Node> nodes) {
 
         this.queue = queue;
         this.nodes = nodes;
     }
 
-    public List<? extends Queue.Item> getQueue() {
+    public List<Queue.BuildableItem> getQueue() {
 
         return queue;
     }
@@ -47,5 +49,10 @@ public class StateProviderMock implements StateProvider {
     public List<Node> getNodes() {
 
         return nodes;
+    }
+
+    public void updateQueue() {
+
+        throw new NotImplementedException();
     }
 }

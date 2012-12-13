@@ -31,7 +31,6 @@ import hudson.model.AbstractCIBase;
 import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.Queue;
-import hudson.model.Queue.Item;
 
 import java.util.Arrays;
 import java.util.List;
@@ -43,7 +42,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Node.class})
+@PrepareForTest({Node.class, Queue.BuildableItem.class})
 public class AbstractCiStateProviderTest {
 
     private AbstractCIBase jenkins;
@@ -130,24 +129,24 @@ public class AbstractCiStateProviderTest {
     @Test
     public void getQueue() {
 
-        final Item firstItem = mock(Queue.Item.class);
-        final Item secondItem = mock(Queue.Item.class);
+        final Queue.BuildableItem firstItem = mock(Queue.BuildableItem.class);
+        final Queue.BuildableItem secondItem = mock(Queue.BuildableItem.class);
 
-        final Queue.Item[] inItems = usingQueue(jenkins, firstItem, secondItem);
+        final Queue.BuildableItem[] inItems = usingQueue(jenkins, firstItem, secondItem);
 
-        final List<? extends Queue.Item> items = new AbstractCiStateProvider(jenkins).getQueue();
+        final List<Queue.BuildableItem> items = new AbstractCiStateProvider(jenkins).getQueue();
 
         assertEquals(inItems.length, items.size());
         assertSame(inItems[0], items.get(0));
         assertSame(inItems[1], items.get(1));
     }
 
-    private Queue.Item[] usingQueue(AbstractCIBase jenkins, final Queue.Item... items) {
+    private Queue.BuildableItem[] usingQueue(AbstractCIBase jenkins, final Queue.BuildableItem... items) {
 
         final Queue queue = mock(Queue.class);
         when(jenkins.getQueue()).thenReturn(queue);
 
-        when(queue.getItems()).thenReturn(items);
+        when(queue.getBuildableItems()).thenReturn(Arrays.asList(items));
         return items;
     }
 

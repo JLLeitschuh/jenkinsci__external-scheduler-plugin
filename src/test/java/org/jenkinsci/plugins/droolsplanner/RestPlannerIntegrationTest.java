@@ -31,6 +31,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
+import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.Queue;
 
@@ -55,7 +56,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
  * @author ogondza
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(Node.class)
+@PrepareForTest({Node.class, Queue.BuildableItem.class, Computer.class})
 public class RestPlannerIntegrationTest {
 
     public static final String URL_PROPERTY = "integration.remote.url";
@@ -111,7 +112,7 @@ public class RestPlannerIntegrationTest {
     @Test
     public void getSolutionForSimilarItems() throws InterruptedException {
 
-        final List<Queue.Item> items = ItemMock.list();
+        final List<Queue.BuildableItem> items = ItemMock.list();
 
         final Set<Node> nodeSet = getNodeSet("assigned_solution", 2, 2);
 
@@ -133,7 +134,7 @@ public class RestPlannerIntegrationTest {
     @Test
     public void getSolution() throws InterruptedException {
 
-        final List<Queue.Item> items = ItemMock.list();
+        final List<Queue.BuildableItem> items = ItemMock.list();
         items.add(getItem(getNodeSet("get_solution", 2, 1)));
 
         pp.queue(new StateProviderMock(items, nodes), assignments);
@@ -150,7 +151,7 @@ public class RestPlannerIntegrationTest {
     @Test
     public void getAssignedSolution() throws InterruptedException {
 
-        final List<Queue.Item> items = ItemMock.list();
+        final List<Queue.BuildableItem> items = ItemMock.list();
         items.add(getItem(getNodeSet("get_assigned_solution", 2, 1)));
 
         pp.queue(new StateProviderMock(items, nodes), assignments);
@@ -202,10 +203,10 @@ public class RestPlannerIntegrationTest {
     }
 
     private void assertAssignedOlder(
-            final Set<Node> nodes, final Queue.Item older, final Queue.Item newer
+            final Set<Node> nodes, final Queue.BuildableItem older, final Queue.BuildableItem newer
     ) throws InterruptedException {
 
-        final List<Queue.Item> items = ItemMock.list();
+        final List<Queue.BuildableItem> items = ItemMock.list();
         items.add(older);
         items.add(newer);
 
@@ -218,7 +219,7 @@ public class RestPlannerIntegrationTest {
         assertThat(assignments.nodeName(newer), nullValue());
     }
 
-    private Queue.Item getItem(final Set<Node> nodeSet) {
+    private Queue.BuildableItem getItem(final Set<Node> nodeSet) {
 
         return ItemMock.create(
                 nodeSet, 2, "Single queue item", 3

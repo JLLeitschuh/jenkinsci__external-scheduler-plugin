@@ -71,7 +71,7 @@ public final class NodeAssignments {
         this.assignments = Collections.unmodifiableMap(builder.assignments);
     }
 
-    public String nodeName(final Queue.Item task) {
+    public String nodeName(final Queue.BuildableItem task) {
 
         return nodeName(task.id);
     }
@@ -109,6 +109,6 @@ public final class NodeAssignments {
     @Override
     public String toString() {
 
-        return this.getClass().getName() + ": " + assignments.toString();
+        return this.getClass().getSimpleName() + ": " + assignments.toString();
     }
 }

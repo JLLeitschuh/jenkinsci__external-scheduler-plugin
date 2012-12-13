@@ -29,7 +29,7 @@ import hudson.model.Node;
 import hudson.model.Queue;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -41,7 +41,7 @@ public class AbstractCiStateProvider implements StateProvider {
 
     private final AbstractCIBase base;
 
-    public AbstractCiStateProvider(final AbstractCIBase base) {
+    /*package*/ AbstractCiStateProvider(final AbstractCIBase base) {
 
         if (base == null) throw new IllegalArgumentException("Base is null");
 
@@ -49,25 +49,23 @@ public class AbstractCiStateProvider implements StateProvider {
     }
 
     /**
-     * @return List of online Nodes
+     * Get nodes ready to execute builds
+     *
+     * @return List of online Nodes. Never null
      */
     public List<Node> getNodes() {
 
-        final List<Node> nodes = new ArrayList<Node>();
+        final List<Node> nodeCandidates = new ArrayList<Node>(base.getNodes());
+        nodeCandidates.add(base);
 
-        for (final Node nodeCadidate: base.getNodes()) {
+        final List<Node> nodes = new ArrayList<Node>();
+        for (final Node nodeCadidate: nodeCandidates) {
 
             if (nodeReady(nodeCadidate)) {
 
                 nodes.add(nodeCadidate);
             }
         }
-
-        if (nodeReady(base)) {
-
-            nodes.add(base);
-        }
-
 
         return nodes;
     }
@@ -81,10 +79,22 @@ public class AbstractCiStateProvider implements StateProvider {
     }
 
     /**
-     * @return List of queued item to be scheduled
+     * Get buildable items to schedule
+     *
+     * @return List of queued item to be scheduled. Never null
      */
-    public List<? extends Queue.Item> getQueue() {
+    public List<Queue.BuildableItem> getQueue() {
 
-        return Arrays.asList(base.getQueue().getItems());
+        return Collections.unmodifiableList(
+                base.getQueue().getBuildableItems()
+        );
+    }
+
+    /**
+     * Notify CIBase about the changes in the queue assignments
+     */
+    public void updateQueue() {
+
+        base.getQueue().scheduleMaintenance();
     }
 }

@@ -56,7 +56,7 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
     Long lastState = null;
 
     /**
-     * Does Drools Based Queue Planner plugin intercept Jenkins queue scheduling
+     * Determine whether the Planner plugin intercept Jenkins queue scheduling
      */
     public boolean assumeActive() {
 
@@ -88,7 +88,16 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
 
         if (!assumeActive()) return null;
 
-        return this.solution = planner.solution();
+        NodeAssignments oldSolution = this.solution;
+
+        solution = planner.solution();
+
+        if (!solution.equals(oldSolution)) {
+
+            stateProvider.updateQueue();
+        }
+
+        return solution;
     }
 
     /**
@@ -162,10 +171,6 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
 
                 // Stop the planner in case we are starting another
                 planner.stop();
-
-                // Erase the reference not to use stopped planner in case new
-                // configuration will fail to initialize
-                //planner = null;
             }
 
             LOGGER.log(Level.INFO, "Attaching remote drools queue planner.");
@@ -238,7 +243,6 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
 
         /**
          * Register Dispatcher as a Jenkins extension
-         * @return  Dispatcher instance
          */
         @Extension
         public static Dispatcher getDispatcher() {
@@ -248,7 +252,6 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
 
         /**
          * Register RemoteUpdater as a Jenkins extension
-         * @return  RemoteUpdater instance
          */
         @Extension
         public static RemoteUpdater getUpdater() {

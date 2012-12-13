@@ -23,10 +23,14 @@
  */
 package org.jenkinsci.plugins.droolsplanner;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
+import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.Queue;
 import hudson.model.queue.CauseOfBlockage;
@@ -40,6 +44,7 @@ import java.util.SortedSet;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import net.sf.json.util.JSONStringer;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,7 +52,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Node.class, Queue.WaitingItem.class})
+@PrepareForTest({Node.class, Computer.class, Queue.BuildableItem.class})
 public class JsonSerializerTest {
 
     private static final JsonSerializer SERIALIZER = new JsonSerializer();
@@ -55,6 +60,26 @@ public class JsonSerializerTest {
     private final NodeMockFactory nodeFactory = new NodeMockFactory();
 
     private final List<Node> nodes = new ArrayList<Node>();
+
+    @Test
+    public void deserializeScore() {
+
+        assertThat(-1, equalTo(SERIALIZER.extractScore(getScoreMessage(-1))));
+        assertThat(0, equalTo(SERIALIZER.extractScore(getScoreMessage(0))));
+        assertThat(1, equalTo(SERIALIZER.extractScore(getScoreMessage(1))));
+    }
+
+    private String getScoreMessage(final long score) {
+
+        final String message = new JSONStringer()
+            .object()
+            .key("score").value(score)
+            .endObject()
+            .toString()
+        ;
+
+        return message;
+    }
 
     @Test
     public void deserializeSingleItem() {
@@ -85,9 +110,9 @@ public class JsonSerializerTest {
         assertEquals(json, actual);
     }
 
-    private List<Queue.Item> singleItem() {
+    private List<Queue.BuildableItem> singleItem() {
 
-        final List<Queue.Item> items = new ArrayList<Queue.Item>(1);
+        final List<Queue.BuildableItem> items = ItemMock.list();
         final Set<Node> nodes = nodeFactory.set();
 
         nodes.add(nodeFactory.node("master", 2, 1));
@@ -117,9 +142,9 @@ public class JsonSerializerTest {
         assertEquals(json, actual);
     }
 
-    private List<Queue.Item> severalItems() {
+    private List<Queue.BuildableItem> severalItems() {
 
-        final List<Queue.Item> items = new ArrayList<Queue.Item>(1);
+        final List<Queue.BuildableItem> items = ItemMock.list();
 
         SortedSet<Node> nodes = nodeFactory.set();
 
@@ -155,9 +180,9 @@ public class JsonSerializerTest {
         assertEquals(json, actual);
     }
 
-    private List<Queue.Item> unlabeledItem() {
+    private List<Queue.BuildableItem> unlabeledItem() {
 
-        final List<Queue.Item> items = new ArrayList<Queue.Item>(1);
+        final List<Queue.BuildableItem> items = ItemMock.list();
 
         items.add(ItemMock.create(null, 2, "Unlabeled item", 3));
 
@@ -182,17 +207,12 @@ public class JsonSerializerTest {
         nodes.add(regular);
         nodes.add(exclusive);
 
-        final Queue.Item item = ItemMock.create(
+        final Queue.BuildableItem item = ItemMock.create(
                 new HashSet<Node>(nodes), 42, "item", 1
         );
 
-        final String actual = SERIALIZER.buildQuery(
-                new StateProviderMock(Arrays.asList(item), nodes),
-                NodeAssignments.empty()
-        );
-
-        final JSONObject json = JSONObject.fromObject(actual);
-        final JSONArray nodes = json.getJSONArray("queue")
+        final JSONArray nodes = this
+                .serialize(Arrays.asList(item), this.nodes, NodeAssignments.empty())
                 .getJSONObject(0)
                 .getJSONArray("nodes")
         ;
@@ -201,5 +221,47 @@ public class JsonSerializerTest {
 
         final String nodeName = nodes.getJSONObject(0).getString("name");
         assertEquals("regular", nodeName);
+    }
+
+    @Test
+    public void testUnassignOfflineNode() {
+
+        final NodeAssignments solution = NodeAssignments.builder()
+                .assign(1, "offline")
+                .build()
+        ;
+
+        final Node offline = nodeFactory.node("offline", 1, 1);
+
+        when(offline.toComputer().isOffline()).thenReturn(true);
+
+        nodes.add(offline);
+
+        final Queue.BuildableItem item = ItemMock.create(
+                new HashSet<Node>(nodes), 1, "item", 1
+        );
+
+        final JSONObject assignedTo = serialize(Arrays.asList(item), this.nodes, solution)
+                .getJSONObject(0)
+                .getJSONObject("assigned")
+        ;
+
+        final String nodeName = assignedTo.isNullObject() ? null : assignedTo.toString();
+
+        assertNull("Node assigned to " + nodeName, nodeName);
+    }
+
+    private JSONArray serialize(
+            final List<Queue.BuildableItem> items,
+            final List<Node> nodes,
+            final NodeAssignments solution
+    ) {
+
+        final String actual = SERIALIZER.buildQuery(
+                new StateProviderMock(items, nodes),
+                solution
+        );
+
+        return JSONObject.fromObject(actual).getJSONArray("queue");
     }
 }

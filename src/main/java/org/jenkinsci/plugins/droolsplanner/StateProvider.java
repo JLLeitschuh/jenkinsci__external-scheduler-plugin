@@ -32,5 +32,7 @@ public interface StateProvider {
 
     List<Node> getNodes();
 
-    List<? extends Queue.Item> getQueue();
+    List<Queue.BuildableItem> getQueue();
+
+    void updateQueue ();
 }

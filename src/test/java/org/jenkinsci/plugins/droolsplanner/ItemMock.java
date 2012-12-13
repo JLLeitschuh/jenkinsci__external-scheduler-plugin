@@ -23,60 +23,46 @@
  */
 package org.jenkinsci.plugins.droolsplanner;
 
-import hudson.model.Action;
+import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.when;
 import hudson.model.Node;
 import hudson.model.Queue;
 import hudson.model.labels.LabelAtom;
-import hudson.model.queue.CauseOfBlockage;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import org.mockito.Mockito;
+import org.powermock.reflect.Whitebox;
 
-class ItemMock extends Queue.Item {
+class ItemMock {
 
-    private final Set<Node> nodes;
+    public static List<Queue.BuildableItem> list() {
 
-    public static List<Queue.Item> list() {
-
-        return new ArrayList<Queue.Item>();
+        return new ArrayList<Queue.BuildableItem>();
     }
 
-    public static ItemMock create(
-            final Set<Node> nodes, int id, String displayName, int inQueueSince
+    public static Queue.BuildableItem create(
+            final Set<Node> nodes, int id, String displayName, long inQueueSince
     ) {
 
-        final Queue.Task task = Mockito.mock(Queue.Task.class);
-
-        Mockito.when(task.getDisplayName()).thenReturn(displayName);
-
-        return new ItemMock(task, nodes, id, inQueueSince);
-    }
-
-    public ItemMock(Queue.Task task, Set<Node> nodes, int id, int inQueueSince) {
-
-        super(task, Collections.<Action>emptyList(), id, null, inQueueSince);
-
-        this.nodes= nodes;
-    }
-
-    @Override
-    public CauseOfBlockage getCauseOfBlockage() {
-
-        throw new AssertionError("Noone is supposed to to call that");
-    }
-
-    public LabelAtom getAssignedLabel() {
-
-        return new LabelAtom ("Label name") {
+        final Queue.BuildableItem item = mock(Queue.BuildableItem.class);
+        when(item.getAssignedLabel()).thenReturn(new LabelAtom ("Label name") {
             @Override
             public Set<Node> getNodes() {
 
                 return nodes;
             }
-        };
+        });
+
+        Whitebox.setInternalState(item, "id", id);
+        when(item.getInQueueSince()).thenReturn(inQueueSince);
+
+        final Queue.Task task = mock(Queue.Task.class);
+        when(task.getDisplayName()).thenReturn(displayName);
+
+        Whitebox.setInternalState(item, "task", task);
+
+        return item;
     }
 }

@@ -51,11 +51,6 @@ public class Dispatcher extends QueueTaskDispatcher {
         this.planner = planner;
     }
 
-    private String itemName(final Queue.Item item) {
-
-        return item.task.getDisplayName() + ":" + item.id;
-    }
-
     public CauseOfBlockage canTake(final Node node, final BuildableItem item) {
 
         return assignToNode(node, item)
@@ -76,6 +71,11 @@ public class Dispatcher extends QueueTaskDispatcher {
         logStatus(assigned, "assigning " + itemName(item) + " to " + node.getSelfLabel());
 
         return assigned;
+    }
+
+    private String itemName(final Queue.BuildableItem item) {
+
+        return item.task.getDisplayName() + ":" + item.id;
     }
 
     private void logStatus(final boolean status, String message) {

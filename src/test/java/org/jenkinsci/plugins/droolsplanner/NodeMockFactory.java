@@ -24,6 +24,8 @@
 package org.jenkinsci.plugins.droolsplanner;
 
 import static org.mockito.Matchers.any;
+import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.when;
 import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.Node.Mode;
@@ -33,9 +35,6 @@ import hudson.model.labels.LabelAtom;
 import java.util.Comparator;
 import java.util.SortedSet;
 import java.util.TreeSet;
-
-import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
 
 class NodeMockFactory {
 
@@ -55,17 +54,20 @@ class NodeMockFactory {
 
     public Node node(final String name, final int executors, final int freeExecutors) {
 
-        final Computer computer = Mockito.mock(Computer.class);
-        final Node node = PowerMockito.mock(Node.class);
+        final Computer computer = mock(Computer.class);
+        final Node node = mock(Node.class);
 
-        PowerMockito.when(node.getDisplayName()).thenReturn(name);
-        PowerMockito.when(node.getSelfLabel()).thenReturn(new LabelAtom(name));
-        PowerMockito.when(node.getNumExecutors()).thenReturn(executors);
-        PowerMockito.when(node.toComputer()).thenReturn(computer);
-        PowerMockito.when(node.canTake(any(Queue.BuildableItem.class))).thenReturn(null);
-        PowerMockito.when(node.getMode()).thenReturn(Mode.NORMAL);
+        when(node.getDisplayName()).thenReturn(name);
+        when(node.getSelfLabel()).thenReturn(new LabelAtom(name));
+        when(node.getNumExecutors()).thenReturn(executors);
+        when(node.toComputer()).thenReturn(computer);
+        when(node.canTake(any(Queue.BuildableItem.class))).thenReturn(null);
+        when(node.getMode()).thenReturn(Mode.NORMAL);
 
-        PowerMockito.when(computer.countIdle()).thenReturn(freeExecutors);
+        when(computer.countIdle()).thenReturn(freeExecutors);
+        when(computer.isOffline()).thenReturn(false);
+        when(computer.isOnline()).thenCallRealMethod();
+        when(computer.isAcceptingTasks()).thenReturn(true);
 
         return node;
     }
