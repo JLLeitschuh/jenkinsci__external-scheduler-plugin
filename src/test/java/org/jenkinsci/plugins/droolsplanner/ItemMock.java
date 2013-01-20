@@ -35,7 +35,7 @@ import java.util.Set;
 
 import org.powermock.reflect.Whitebox;
 
-class ItemMock {
+public class ItemMock {
 
     public static List<Queue.BuildableItem> list() {
 

@@ -23,16 +23,16 @@
  */
 package org.jenkinsci.plugins.droolsplanner;
 
-import hudson.model.Node;
-import hudson.model.Queue;
+/**
+ *
+ * @author ogondza
+ */
+public final class Score {
 
-import java.util.List;
+    private int score;
 
-public interface StateProvider {
+    public int get() {
 
-    List<Node> getNodes();
-
-    List<Queue.BuildableItem> getQueue();
-
-    void updateQueue();
+        return score;
+    }
 }

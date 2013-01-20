@@ -41,7 +41,7 @@ public interface Planner {
      * Get planner score
      * @return score
      */
-    int score();
+    Score score();
 
     /**
      * Get planner solution

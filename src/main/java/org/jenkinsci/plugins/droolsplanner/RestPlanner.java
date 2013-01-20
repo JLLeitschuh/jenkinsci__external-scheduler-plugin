@@ -31,6 +31,8 @@ import java.util.regex.Pattern;
 
 import javax.ws.rs.core.MediaType;
 
+import org.jenkinsci.plugins.droolsplanner.json.Translator;
+
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.UniformInterfaceException;
@@ -50,7 +52,7 @@ public final class RestPlanner implements Planner {
     private static final String PREFIX = "rest/hudsonQueue";
     private static final String TYPE = MediaType.APPLICATION_JSON;
 
-    private static final JsonSerializer serializator = new JsonSerializer();
+    private static final Translator serializator = new Translator();
 
     private enum Status {
         RUNNING, STOPPED;
@@ -126,7 +128,7 @@ public final class RestPlanner implements Planner {
     /**
      * @see org.jenkinsci.plugins.droolsplanner.Planner#score()
      */
-    public int score() {
+    public Score score() {
 
         assumeRunning();
 

@@ -36,7 +36,7 @@ import java.util.Comparator;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-class NodeMockFactory {
+public class NodeMockFactory {
 
     /**
      * Use sorted set to simplify checking
