@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.jenkinsci.plugins.droolsplanner;
+package org.jenkinsci.plugins.externalscheduler;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
@@ -35,6 +35,7 @@ import hudson.model.Queue;
 import java.util.Arrays;
 import java.util.List;
 
+import org.jenkinsci.plugins.externalscheduler.AbstractCiStateProvider;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -4,17 +4,15 @@
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
     <version>1.480</version>
-<!--    <version>1.461</version>-->
-<!--    <version>1.447</version>-->
   </parent>
 
   <groupId>org.jenkins-ci.plugins</groupId>
-  <artifactId>drools-queue-planner-plugin</artifactId>
+  <artifactId>external-scheduler-plugin</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>hpi</packaging>
-  <name>Drools Queue Planner Plugin</name>
-  <description>Drools based queue planner plugin</description>
-  <url>https://wiki.jenkins-ci.org/display/JENKINS/Drools+Queue+Planner+Plugin</url>
+  <name>External Scheduler Plugin</name>
+  <description>Delegate scheduler decisions to external application</description>
+  <url>https://wiki.jenkins-ci.org/display/JENKINS/External+Scheduler+Plugin</url>
   
   <developers>
     <developer>
@@ -24,9 +22,9 @@
     </developer>
   </developers>
   <scm>
-    <connection>scm:git:git://github.com/jenkinsci/drools-queue-planner-plugin.git</connection>
-    <developerConnection>scm:git:git@github.com:jenkinsci/drools-queue-planner-plugin.git</developerConnection>
-    <url>https://github.com/jenkinsci/drools-queue-planner-plugin</url>
+    <connection>scm:git:git://github.com/jenkinsci/external-scheduler-plugin.git</connection>
+    <developerConnection>scm:git:git@github.com:jenkinsci/external-scheduler-plugin.git</developerConnection>
+    <url>https://github.com/jenkinsci/external-scheduler-plugin</url>
   </scm>
 
   <repositories>

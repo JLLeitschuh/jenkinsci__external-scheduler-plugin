@@ -21,54 +21,48 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.jenkinsci.plugins.droolsplanner;
+package org.jenkinsci.plugins.externalscheduler;
 
-import static org.mockito.Matchers.any;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
-import hudson.model.Computer;
 import hudson.model.Node;
-import hudson.model.Node.Mode;
 import hudson.model.Queue;
 import hudson.model.labels.LabelAtom;
 
-import java.util.Comparator;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
-public class NodeMockFactory {
+import org.powermock.reflect.Whitebox;
 
-    /**
-     * Use sorted set to simplify checking
-     */
-    public SortedSet<Node> set() {
+public class ItemMock {
 
-        return new TreeSet<Node>(new Comparator<Node>() {
+    public static List<Queue.BuildableItem> list() {
 
-            public int compare(Node o1, Node o2) {
-
-                return o1.getDisplayName().compareTo(o2.getDisplayName());
-            }
-        });
+        return new ArrayList<Queue.BuildableItem>();
     }
 
-    public Node node(final String name, final int executors, final int freeExecutors) {
+    public static Queue.BuildableItem create(
+            final Set<Node> nodes, int id, String displayName, long inQueueSince
+    ) {
 
-        final Computer computer = mock(Computer.class);
-        final Node node = mock(Node.class);
+        final Queue.BuildableItem item = mock(Queue.BuildableItem.class);
+        when(item.getAssignedLabel()).thenReturn(new LabelAtom ("Label name") {
+            @Override
+            public Set<Node> getNodes() {
 
-        when(node.getDisplayName()).thenReturn(name);
-        when(node.getSelfLabel()).thenReturn(new LabelAtom(name));
-        when(node.getNumExecutors()).thenReturn(executors);
-        when(node.toComputer()).thenReturn(computer);
-        when(node.canTake(any(Queue.BuildableItem.class))).thenReturn(null);
-        when(node.getMode()).thenReturn(Mode.NORMAL);
+                return nodes;
+            }
+        });
 
-        when(computer.countIdle()).thenReturn(freeExecutors);
-        when(computer.isOffline()).thenReturn(false);
-        when(computer.isOnline()).thenCallRealMethod();
-        when(computer.isAcceptingTasks()).thenReturn(true);
+        Whitebox.setInternalState(item, "id", id);
+        when(item.getInQueueSince()).thenReturn(inQueueSince);
 
-        return node;
+        final Queue.Task task = mock(Queue.Task.class);
+        when(task.getDisplayName()).thenReturn(displayName);
+
+        Whitebox.setInternalState(item, "task", task);
+
+        return item;
     }
 }

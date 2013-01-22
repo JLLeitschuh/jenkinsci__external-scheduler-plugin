@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.jenkinsci.plugins.droolsplanner;
+package org.jenkinsci.plugins.externalscheduler;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -102,7 +102,7 @@ public class RestPlannerIntegrationTest {
     public void getName() throws MalformedURLException {
 
         assertEquals(
-                "JBQA Jenkins Drools planner",
+                "hudson-queue-planning: JBQA Jenkins Drools planner",
                 pp.name()
         );
     }

@@ -21,11 +21,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.jenkinsci.plugins.droolsplanner.json;
+package org.jenkinsci.plugins.externalscheduler.json;
 
-import org.jenkinsci.plugins.droolsplanner.NodeAssignments;
-import org.jenkinsci.plugins.droolsplanner.Score;
-import org.jenkinsci.plugins.droolsplanner.StateProvider;
+import org.jenkinsci.plugins.externalscheduler.NodeAssignments;
+import org.jenkinsci.plugins.externalscheduler.Score;
+import org.jenkinsci.plugins.externalscheduler.StateProvider;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

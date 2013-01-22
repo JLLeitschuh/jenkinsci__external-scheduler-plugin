@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.jenkinsci.plugins.droolsplanner;
+package org.jenkinsci.plugins.externalscheduler;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
@@ -73,7 +73,7 @@ public class RestPlannerTest {
 
         when(client.resource(Mockito.endsWith("/info"))).thenReturn(r);
 
-        when(rb.get(String.class)).thenReturn("hudson-queue-planning : Planner Mock on URL planer.mock.localhost");
+        when(rb.get(String.class)).thenReturn("info: hudson-queue-planning: Planner Mock");
     }
 
     @Test(expected = IllegalStateException.class)
@@ -117,6 +117,6 @@ public class RestPlannerTest {
     @Test
     public void checkName() {
 
-        assertEquals( "Planner Mock", pp.name() );
+        assertEquals("hudson-queue-planning: Planner Mock", pp.name());
     }
 }

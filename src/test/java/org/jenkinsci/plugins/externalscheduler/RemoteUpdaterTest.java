@@ -21,12 +21,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.jenkinsci.plugins.droolsplanner;
+package org.jenkinsci.plugins.externalscheduler;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.mock;
 
+import org.jenkinsci.plugins.externalscheduler.ExternalPlanner;
+import org.jenkinsci.plugins.externalscheduler.RemoteUpdater;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,25 +37,25 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(DroolsPlanner.class)
+@PrepareForTest(ExternalPlanner.class)
 public class RemoteUpdaterTest {
 
-    private DroolsPlanner droolsPlanner;
+    private ExternalPlanner externalPlanner;
 
     private RemoteUpdater updater;
 
     @Before
     public void setUp() {
 
-        droolsPlanner = mock(DroolsPlanner.class);
+        externalPlanner = mock(ExternalPlanner.class);
 
-        updater = new RemoteUpdater(droolsPlanner);
+        updater = new RemoteUpdater(externalPlanner);
     }
 
     @After
     public void tearDown() {
 
-        verifyNoMoreInteractions(droolsPlanner);
+        verifyNoMoreInteractions(externalPlanner);
     }
 
     @Test(expected = AssertionError.class)
@@ -67,7 +69,7 @@ public class RemoteUpdaterTest {
 
         updater.doRun();
 
-        verify(droolsPlanner).sendQueue();
-        verify(droolsPlanner).fetchSolution();
+        verify(externalPlanner).sendQueue();
+        verify(externalPlanner).fetchSolution();
     }
 }

@@ -21,28 +21,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.jenkinsci.plugins.droolsplanner;
+package org.jenkinsci.plugins.externalscheduler;
 
+/**
+ *
+ * @author ogondza
+ */
+public final class Score {
 
-public class DescriptorTest {
-//
-//    private DroolsPlanner.DescriptorImpl descriptor;
-//
-//    @Before
-//    public void setUp() {
-//
-//        MockitoAnnotations.initMocks(this);
-//
-//        descriptor = Mockito.spy(Mockito.mock(
-//                DroolsPlanner.DescriptorImpl.class, Mockito.CALLS_REAL_METHODS
-//        ));
-//
-//        Mockito.doNothing().when(descriptor).load();
-//    }
-//
-//    @Test
-//    public void test () {
-//
-//        System.out.println(descriptor.getDisplayName());
-//    }
+    private int score;
+
+    public int get() {
+
+        return score;
+    }
 }

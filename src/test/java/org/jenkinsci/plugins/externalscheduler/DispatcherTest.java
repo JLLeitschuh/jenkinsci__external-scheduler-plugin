@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.jenkinsci.plugins.droolsplanner;
+package org.jenkinsci.plugins.externalscheduler;
 
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.Assert.assertNotNull;
@@ -32,6 +32,9 @@ import hudson.model.Queue;
 import hudson.model.labels.LabelAtom;
 import hudson.model.queue.CauseOfBlockage;
 
+import org.jenkinsci.plugins.externalscheduler.Dispatcher;
+import org.jenkinsci.plugins.externalscheduler.ExternalPlanner;
+import org.jenkinsci.plugins.externalscheduler.NodeAssignments;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,10 +47,10 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Queue.BuildableItem.class, DroolsPlanner.class})
+@PrepareForTest({Queue.BuildableItem.class, ExternalPlanner.class})
 public class DispatcherTest {
 
-    private DroolsPlanner planner;
+    private ExternalPlanner planner;
     @Mock private Queue.Task task;
     @Mock private Queue.BuildableItem item;
 
@@ -58,7 +61,7 @@ public class DispatcherTest {
 
         MockitoAnnotations.initMocks(this);
 
-        planner = PowerMockito.mock(DroolsPlanner.class);
+        planner = PowerMockito.mock(ExternalPlanner.class);
         dispatcher = new Dispatcher(planner);
 
         item = PowerMockito.mock(Queue.BuildableItem.class);

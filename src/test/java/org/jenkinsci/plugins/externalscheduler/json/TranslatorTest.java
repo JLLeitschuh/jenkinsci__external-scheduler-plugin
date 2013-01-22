@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.jenkinsci.plugins.droolsplanner.json;
+package org.jenkinsci.plugins.externalscheduler.json;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -44,10 +44,11 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.SortedSet;
 
-import org.jenkinsci.plugins.droolsplanner.ItemMock;
-import org.jenkinsci.plugins.droolsplanner.NodeAssignments;
-import org.jenkinsci.plugins.droolsplanner.NodeMockFactory;
-import org.jenkinsci.plugins.droolsplanner.StateProviderMock;
+import org.jenkinsci.plugins.externalscheduler.ItemMock;
+import org.jenkinsci.plugins.externalscheduler.NodeAssignments;
+import org.jenkinsci.plugins.externalscheduler.NodeMockFactory;
+import org.jenkinsci.plugins.externalscheduler.StateProviderMock;
+import org.jenkinsci.plugins.externalscheduler.json.Translator;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;

@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.jenkinsci.plugins.droolsplanner;
+package org.jenkinsci.plugins.externalscheduler;
 
 import hudson.model.Node;
 import hudson.model.Queue;
@@ -42,9 +42,9 @@ public class Dispatcher extends QueueTaskDispatcher {
             Dispatcher.class.getName()
     );
 
-    private final DroolsPlanner planner;
+    private final ExternalPlanner planner;
 
-    /*package*/ Dispatcher(final DroolsPlanner planner) {
+    /*package*/ Dispatcher(final ExternalPlanner planner) {
 
         if (planner == null) throw new AssertionError("No planner");
 
@@ -96,7 +96,7 @@ public class Dispatcher extends QueueTaskDispatcher {
             public String getShortDescription() {
 
                 return String.format(
-                        "Drools Planner decided not to assign %s to %s", item.toString(), node.toString()
+                        "External scheduler decided not to assign %s to %s", item.toString(), node.toString()
                 );
             }
         };

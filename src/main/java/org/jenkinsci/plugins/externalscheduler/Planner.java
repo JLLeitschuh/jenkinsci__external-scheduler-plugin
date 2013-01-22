@@ -21,18 +21,48 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.jenkinsci.plugins.droolsplanner;
+package org.jenkinsci.plugins.externalscheduler;
+
+import java.net.URL;
 
 /**
  *
  * @author ogondza
  */
-public final class Score {
+public interface Planner {
 
-    private int score;
+    /**
+     * Get planner URL
+     * @return Associated URL
+     */
+    URL remoteUrl();
 
-    public int get() {
+    /**
+     * Get planner score
+     * @return score
+     */
+    Score score();
 
-        return score;
-    }
+    /**
+     * Get planner solution
+     * @return New assignments
+     */
+    NodeAssignments solution();
+
+    /**
+     * Put new state into planner
+     * @param stateProvider Jenkins state
+     * @param assignments Current assignments
+     * @return updated or not
+     */
+    boolean queue(
+            final StateProvider stateProvider,
+            final NodeAssignments assignments
+    );
+
+    /**
+     * Stop planner
+     * @return self
+     */
+    Planner stop();
 }

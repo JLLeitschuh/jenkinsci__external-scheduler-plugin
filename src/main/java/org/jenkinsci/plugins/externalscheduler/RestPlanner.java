@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.jenkinsci.plugins.droolsplanner;
+package org.jenkinsci.plugins.externalscheduler;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
 
 import javax.ws.rs.core.MediaType;
 
-import org.jenkinsci.plugins.droolsplanner.json.Translator;
+import org.jenkinsci.plugins.externalscheduler.json.Translator;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
@@ -87,19 +87,19 @@ public final class RestPlanner implements Planner {
     /**
      * Validate URL
      * @return Application name
-     * @throws PlannerException When not a drools planner
+     * @throws PlannerException When not an external scheduler
      */
     private String fetchPlannerName() {
 
         final String info = infoContent();
         final Matcher matcher = Pattern
-                .compile("^hudson-queue-planning : (.*?) on URL")
+                .compile("^info: (.*)$")
                 .matcher(info)
         ;
 
         final boolean valid = matcher.find();
 
-        if (!valid) throw new PlannerException("Not a drools planner: " + info);
+        if (!valid) throw new PlannerException("Not an external scheduler: " + info);
 
         return matcher.group(1);
     }
@@ -113,7 +113,7 @@ public final class RestPlanner implements Planner {
     }
 
     /**
-     * @see org.jenkinsci.plugins.droolsplanner.Planner#remoteUrl()
+     * @see org.jenkinsci.plugins.externalscheduler.Planner#remoteUrl()
      */
     public URL remoteUrl() {
 
@@ -126,7 +126,7 @@ public final class RestPlanner implements Planner {
     }
 
     /**
-     * @see org.jenkinsci.plugins.droolsplanner.Planner#score()
+     * @see org.jenkinsci.plugins.externalscheduler.Planner#score()
      */
     public Score score() {
 
@@ -139,7 +139,7 @@ public final class RestPlanner implements Planner {
     }
 
     /**
-     * @see org.jenkinsci.plugins.droolsplanner.Planner#solution()
+     * @see org.jenkinsci.plugins.externalscheduler.Planner#solution()
      */
     public NodeAssignments solution() {
 
@@ -186,7 +186,7 @@ public final class RestPlanner implements Planner {
     }
 
     /**
-     * @see org.jenkinsci.plugins.droolsplanner.Planner#queue(org.jenkinsci.plugins.droolsplanner.StateProvider, org.jenkinsci.plugins.droolsplanner.NodeAssignments)
+     * @see org.jenkinsci.plugins.externalscheduler.Planner#queue(org.jenkinsci.plugins.externalscheduler.StateProvider, org.jenkinsci.plugins.externalscheduler.NodeAssignments)
      */
     public boolean queue(final StateProvider stateProvider, final NodeAssignments assignments) {
 
@@ -239,7 +239,7 @@ public final class RestPlanner implements Planner {
     }
 
     /**
-     * @see org.jenkinsci.plugins.droolsplanner.Planner#stop()
+     * @see org.jenkinsci.plugins.externalscheduler.Planner#stop()
      */
     public Planner stop() {
 

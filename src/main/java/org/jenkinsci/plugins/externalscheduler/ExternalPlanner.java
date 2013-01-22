@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.jenkinsci.plugins.droolsplanner;
+package org.jenkinsci.plugins.externalscheduler;
 
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
@@ -42,10 +42,10 @@ import org.kohsuke.stapler.StaplerRequest;
 /**
  * @author ogondza
  */
-public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> {
+public final class ExternalPlanner extends AbstractDescribableImpl<ExternalPlanner> {
 
     private final static Logger LOGGER = Logger.getLogger(
-            DroolsPlanner.class.getName()
+            ExternalPlanner.class.getName()
     );
 
     private transient StateProvider stateProvider;
@@ -66,7 +66,7 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
         getDescriptor();
         if (planner != null) return true;
 
-        LOGGER.info("Drools planner not active");
+        LOGGER.info("External scheduler not active");
         return false;
     }
 
@@ -129,16 +129,16 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
     }
 
     @Extension
-    public static class DescriptorImpl extends Descriptor<DroolsPlanner> {
+    public static class DescriptorImpl extends Descriptor<ExternalPlanner> {
 
-        private static DroolsPlanner droolsPlanner = new DroolsPlanner();
+        private static ExternalPlanner externalPlanner = new ExternalPlanner();
 
         private String serverUrl;
 
         public DescriptorImpl() {
 
             load();
-            droolsPlanner.planner = getPlanner(null);
+            externalPlanner.planner = getPlanner(null);
         }
 
         /**
@@ -151,7 +151,7 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
                 return reloadPlanner(planner);
             } catch (PlannerException ex) {
 
-                LOGGER.log(Level.INFO, "Drools queue planner not responding. Using default planner.", ex);
+                LOGGER.log(Level.INFO, "External scheduler not responding. Using default scheduler.", ex);
                 return null;
             }
         }
@@ -173,10 +173,10 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
                 planner.stop();
             }
 
-            LOGGER.log(Level.INFO, "Attaching remote drools queue planner.");
+            LOGGER.log(Level.INFO, "Attaching external scheduler.");
             final RestPlanner newPlanner = new RestPlanner(url);
             newPlanner.queue(
-                    droolsPlanner.stateProvider(),
+                    externalPlanner.stateProvider(),
                     NodeAssignments.empty()
             );
 
@@ -186,7 +186,7 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
         @Override
         public String getDisplayName() {
 
-            return "Drools planner plugin";
+            return "External scheduler plugin";
         }
 
         public String getServerUrl() {
@@ -208,7 +208,7 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
 
             save();
 
-            droolsPlanner.planner = getPlanner(droolsPlanner.planner);
+            externalPlanner.planner = getPlanner(externalPlanner.planner);
 
             return true;
         }
@@ -237,7 +237,7 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
                 return FormValidation.error(ex, "It is not URL");
             } catch(PlannerException ex) {
 
-                return FormValidation.warning(ex, "Server seems down or it is not a Drools planner server");
+                return FormValidation.warning(ex, "Server seems down or it is not an External scheduler");
             }
         }
 
@@ -247,7 +247,7 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
         @Extension
         public static Dispatcher getDispatcher() {
 
-            return new Dispatcher(droolsPlanner);
+            return new Dispatcher(externalPlanner);
         }
 
         /**
@@ -256,7 +256,7 @@ public final class DroolsPlanner extends AbstractDescribableImpl<DroolsPlanner> 
         @Extension
         public static RemoteUpdater getUpdater() {
 
-            return new RemoteUpdater(droolsPlanner);
+            return new RemoteUpdater(externalPlanner);
         }
     }
 }

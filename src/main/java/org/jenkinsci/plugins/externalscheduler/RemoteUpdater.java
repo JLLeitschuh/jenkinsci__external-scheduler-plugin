@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.droolsplanner;
+package org.jenkinsci.plugins.externalscheduler;
 
 import hudson.model.PeriodicWork;
 
@@ -9,9 +9,9 @@ import hudson.model.PeriodicWork;
  */
 public class RemoteUpdater extends PeriodicWork {
 
-    private final DroolsPlanner planner;
+    private final ExternalPlanner planner;
 
-    /*package*/ public RemoteUpdater(final DroolsPlanner planner) {
+    /*package*/ public RemoteUpdater(final ExternalPlanner planner) {
 
         if (planner == null) throw new AssertionError("No planner");
 
