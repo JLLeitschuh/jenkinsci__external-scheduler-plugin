@@ -27,7 +27,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.mock;
 
-import org.jenkinsci.plugins.externalscheduler.ExternalPlanner;
+import org.jenkinsci.plugins.externalscheduler.ExternalScheduler;
 import org.jenkinsci.plugins.externalscheduler.RemoteUpdater;
 import org.junit.After;
 import org.junit.Before;
@@ -37,17 +37,17 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(ExternalPlanner.class)
+@PrepareForTest(ExternalScheduler.class)
 public class RemoteUpdaterTest {
 
-    private ExternalPlanner externalPlanner;
+    private ExternalScheduler externalPlanner;
 
     private RemoteUpdater updater;
 
     @Before
     public void setUp() {
 
-        externalPlanner = mock(ExternalPlanner.class);
+        externalPlanner = mock(ExternalScheduler.class);
 
         updater = new RemoteUpdater(externalPlanner);
     }

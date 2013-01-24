@@ -43,10 +43,10 @@ import com.sun.jersey.api.client.WebResource;
  *
  * @author ogondza
  */
-public final class RestPlanner implements Planner {
+public final class RestScheduler implements Scheduler {
 
     private final static Logger LOGGER = Logger.getLogger(
-            RestPlanner.class.getName()
+            RestScheduler.class.getName()
     );
 
     private static final String PREFIX = "rest/hudsonQueue";
@@ -68,12 +68,12 @@ public final class RestPlanner implements Planner {
     private final String plannerName;
     private Status status = Status.STOPPED;
 
-    public RestPlanner(final URL serviceDestination) {
+    public RestScheduler(final URL serviceDestination) throws SchedulerException {
 
         this(serviceDestination, Client.create());
     }
 
-    public RestPlanner(final URL serviceDestination, final Client client) {
+    public RestScheduler(final URL serviceDestination, final Client client) throws SchedulerException {
 
         if (serviceDestination == null) throw new IllegalArgumentException (
                 "No URL provided"
@@ -87,9 +87,9 @@ public final class RestPlanner implements Planner {
     /**
      * Validate URL
      * @return Application name
-     * @throws PlannerException When not an external scheduler
+     * @throws SchedulerException When not an external scheduler
      */
-    private String fetchPlannerName() {
+    private String fetchPlannerName() throws SchedulerException {
 
         final String info = infoContent();
         final Matcher matcher = Pattern
@@ -99,12 +99,12 @@ public final class RestPlanner implements Planner {
 
         final boolean valid = matcher.find();
 
-        if (!valid) throw new PlannerException("Not an external scheduler: " + info);
+        if (!valid) throw new SchedulerException("Not an external scheduler: " + info);
 
         return matcher.group(1);
     }
 
-    private String infoContent() {
+    private String infoContent() throws SchedulerException {
 
         return get(
                 getResource("/info").accept(MediaType.TEXT_PLAIN),
@@ -113,7 +113,7 @@ public final class RestPlanner implements Planner {
     }
 
     /**
-     * @see org.jenkinsci.plugins.externalscheduler.Planner#remoteUrl()
+     * @see org.jenkinsci.plugins.externalscheduler.Scheduler#remoteUrl()
      */
     public URL remoteUrl() {
 
@@ -126,9 +126,10 @@ public final class RestPlanner implements Planner {
     }
 
     /**
-     * @see org.jenkinsci.plugins.externalscheduler.Planner#score()
+     * @throws SchedulerException
+     * @see org.jenkinsci.plugins.externalscheduler.Scheduler#score()
      */
-    public Score score() {
+    public Score score() throws SchedulerException {
 
         assumeRunning();
 
@@ -139,9 +140,10 @@ public final class RestPlanner implements Planner {
     }
 
     /**
-     * @see org.jenkinsci.plugins.externalscheduler.Planner#solution()
+     * @throws SchedulerException
+     * @see org.jenkinsci.plugins.externalscheduler.Scheduler#solution()
      */
-    public NodeAssignments solution() {
+    public NodeAssignments solution() throws SchedulerException {
 
         assumeRunning();
 
@@ -158,12 +160,12 @@ public final class RestPlanner implements Planner {
         );
     }
 
-    private String get(final WebResource.Builder builder) {
+    private String get(final WebResource.Builder builder) throws SchedulerException {
 
         return get(builder, null);
     }
 
-    private String get(final WebResource.Builder builder, final String errorMessage) {
+    private String get(final WebResource.Builder builder, final String errorMessage) throws SchedulerException {
 
         if (builder == null) throw new AssertionError("No builder provided");
 
@@ -182,13 +184,14 @@ public final class RestPlanner implements Planner {
         }
 
         final String message = errorMessage != null ? errorMessage : cause.toString();
-        throw new PlannerException(message, cause);
+        throw new SchedulerException(message, cause);
     }
 
     /**
-     * @see org.jenkinsci.plugins.externalscheduler.Planner#queue(org.jenkinsci.plugins.externalscheduler.StateProvider, org.jenkinsci.plugins.externalscheduler.NodeAssignments)
+     * @throws SchedulerException
+     * @see org.jenkinsci.plugins.externalscheduler.Scheduler#queue(org.jenkinsci.plugins.externalscheduler.StateProvider, org.jenkinsci.plugins.externalscheduler.NodeAssignments)
      */
-    public boolean queue(final StateProvider stateProvider, final NodeAssignments assignments) {
+    public boolean queue(final StateProvider stateProvider, final NodeAssignments assignments) throws SchedulerException {
 
         if (assignments == null) throw new IllegalArgumentException("No assignments");
         if (stateProvider == null) throw new IllegalArgumentException("No stateProvider");
@@ -210,7 +213,7 @@ public final class RestPlanner implements Planner {
         return true;
     }
 
-    private void sendQueue(final WebResource.Builder resource, final String queueString) {
+    private void sendQueue(final WebResource.Builder resource, final String queueString) throws SchedulerException {
 
         try {
 
@@ -219,14 +222,14 @@ public final class RestPlanner implements Planner {
             status = Status.RUNNING;
         } catch (UniformInterfaceException ex) {
 
-            throw new PlannerException(ex);
+            throw new SchedulerException(ex);
         } catch (ClientHandlerException ex) {
 
-            throw new PlannerException(ex);
+            throw new SchedulerException(ex);
         }
     }
 
-    private void updateQueue(final WebResource.Builder resource, final String queueString) {
+    private void updateQueue(final WebResource.Builder resource, final String queueString) throws SchedulerException {
 
         try {
 
@@ -239,9 +242,10 @@ public final class RestPlanner implements Planner {
     }
 
     /**
-     * @see org.jenkinsci.plugins.externalscheduler.Planner#stop()
+     * @throws SchedulerException
+     * @see org.jenkinsci.plugins.externalscheduler.Scheduler#stop()
      */
-    public Planner stop() {
+    public Scheduler stop() throws SchedulerException {
 
         if (!status.isRunning()) {
 
@@ -259,10 +263,10 @@ public final class RestPlanner implements Planner {
             getResource().delete();
         } catch (UniformInterfaceException ex) {
 
-            throw new PlannerException(ex);
+            throw new SchedulerException(ex);
         } catch (ClientHandlerException ex) {
 
-            throw new PlannerException(ex);
+            throw new SchedulerException(ex);
         }
 
         return this;

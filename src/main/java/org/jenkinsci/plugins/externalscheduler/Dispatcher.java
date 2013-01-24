@@ -42,9 +42,9 @@ public class Dispatcher extends QueueTaskDispatcher {
             Dispatcher.class.getName()
     );
 
-    private final ExternalPlanner planner;
+    private final ExternalScheduler planner;
 
-    /*package*/ Dispatcher(final ExternalPlanner planner) {
+    /*package*/ Dispatcher(final ExternalScheduler planner) {
 
         if (planner == null) throw new AssertionError("No planner");
 

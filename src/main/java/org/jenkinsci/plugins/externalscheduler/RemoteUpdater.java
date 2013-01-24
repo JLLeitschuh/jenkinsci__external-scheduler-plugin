@@ -9,20 +9,20 @@ import hudson.model.PeriodicWork;
  */
 public class RemoteUpdater extends PeriodicWork {
 
-    private final ExternalPlanner planner;
+    private final ExternalScheduler scheduler;
 
-    /*package*/ public RemoteUpdater(final ExternalPlanner planner) {
+    /*package*/ public RemoteUpdater(final ExternalScheduler scheduler) {
 
-        if (planner == null) throw new AssertionError("No planner");
+        if (scheduler == null) throw new AssertionError("No scheduler");
 
-        this.planner = planner;
+        this.scheduler = scheduler;
     }
 
     @Override
     protected void doRun() throws Exception {
 
-        planner.fetchSolution();
-        planner.sendQueue();
+        scheduler.fetchSolution();
+        scheduler.sendQueue();
     }
 
     @Override

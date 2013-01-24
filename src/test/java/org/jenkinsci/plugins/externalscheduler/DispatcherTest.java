@@ -32,9 +32,6 @@ import hudson.model.Queue;
 import hudson.model.labels.LabelAtom;
 import hudson.model.queue.CauseOfBlockage;
 
-import org.jenkinsci.plugins.externalscheduler.Dispatcher;
-import org.jenkinsci.plugins.externalscheduler.ExternalPlanner;
-import org.jenkinsci.plugins.externalscheduler.NodeAssignments;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,10 +44,10 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Queue.BuildableItem.class, ExternalPlanner.class})
+@PrepareForTest({Queue.BuildableItem.class, ExternalScheduler.class})
 public class DispatcherTest {
 
-    private ExternalPlanner planner;
+    private ExternalScheduler planner;
     @Mock private Queue.Task task;
     @Mock private Queue.BuildableItem item;
 
@@ -61,7 +58,7 @@ public class DispatcherTest {
 
         MockitoAnnotations.initMocks(this);
 
-        planner = PowerMockito.mock(ExternalPlanner.class);
+        planner = PowerMockito.mock(ExternalScheduler.class);
         dispatcher = new Dispatcher(planner);
 
         item = PowerMockito.mock(Queue.BuildableItem.class);
@@ -88,7 +85,7 @@ public class DispatcherTest {
 
     private void notConnected() {
 
-        Mockito.when(planner.assumeActive()).thenReturn(false);
+        Mockito.when(planner.isActive()).thenReturn(false);
     }
 
     @Test

@@ -23,20 +23,49 @@
  */
 package org.jenkinsci.plugins.externalscheduler;
 
-public class PlannerException extends RuntimeException {
+import java.net.URL;
 
-    public PlannerException(final Throwable cause) {
+/**
+ * @author ogondza
+ */
+public interface Scheduler {
 
-        super(cause);
-    }
+    /**
+     * Get planner URL
+     * @return Associated URL
+     */
+    URL remoteUrl();
 
-    public PlannerException(final String message) {
+    /**
+     * Get planner score
+     * @return score
+     * @throws SchedulerException
+     */
+    Score score() throws SchedulerException;
 
-        super(message);
-    }
+    /**
+     * Get planner solution
+     * @return New assignments
+     * @throws SchedulerException
+     */
+    NodeAssignments solution() throws SchedulerException;
 
-    public PlannerException(final String message, final Throwable cause) {
+    /**
+     * Put new state into planner
+     * @param stateProvider Jenkins state
+     * @param assignments Current assignments
+     * @return updated or not
+     * @throws SchedulerException
+     */
+    boolean queue(
+            final StateProvider stateProvider,
+            final NodeAssignments assignments
+    ) throws SchedulerException;
 
-        super(message, cause);
-    }
+    /**
+     * Stop planner
+     * @return self
+     * @throws SchedulerException
+     */
+    Scheduler stop() throws SchedulerException;
 }

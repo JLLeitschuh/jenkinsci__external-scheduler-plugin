@@ -45,15 +45,15 @@ import com.sun.jersey.api.client.WebResource;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(URL.class)
-public class RestPlannerTest {
+public class RestSchedulerTest {
 
     private URL serviceUrl;
     private Client client;
 
-    private RestPlanner pp;
+    private RestScheduler pp;
 
     @Before
-    public void setUp() throws MalformedURLException, InterruptedException {
+    public void setUp() throws MalformedURLException, InterruptedException, SchedulerException {
 
         client = mock(Client.class);
 
@@ -62,7 +62,7 @@ public class RestPlannerTest {
 
         useMeaningFullInfo();
 
-        pp = new RestPlanner(serviceUrl, client);
+        pp = new RestScheduler(serviceUrl, client);
     }
 
     private void useMeaningFullInfo() {
@@ -77,35 +77,35 @@ public class RestPlannerTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void getScoreFromNotStarted() {
+    public void getScoreFromNotStarted() throws SchedulerException {
 
         pp.score();
     }
 
     @Test(expected = IllegalStateException.class)
-    public void getSolutionFromNotStarted() {
+    public void getSolutionFromNotStarted() throws SchedulerException {
 
         pp.solution();
     }
 
     @Test(expected = IllegalStateException.class)
-    public void getScoreFromStopped() {
+    public void getScoreFromStopped() throws SchedulerException {
 
         pp.stop();
         pp.score();
     }
 
     @Test(expected = IllegalStateException.class)
-    public void getSolutionFromStopped() {
+    public void getSolutionFromStopped() throws SchedulerException {
 
         pp.stop();
         pp.solution();
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void getInstanctWithoutUrl() {
+    public void getInstanctWithoutUrl() throws SchedulerException {
 
-        new RestPlanner(null);
+        new RestScheduler(null);
     }
 
     @Test

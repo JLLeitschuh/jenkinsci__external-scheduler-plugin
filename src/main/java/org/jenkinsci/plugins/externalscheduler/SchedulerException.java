@@ -23,46 +23,26 @@
  */
 package org.jenkinsci.plugins.externalscheduler;
 
-import java.net.URL;
-
 /**
+ * Exception thrown in case scheduler has entered a state in which given operation
+ * can not be performed. Scheduler can leave this state at any time in future.
  *
  * @author ogondza
  */
-public interface Planner {
+public class SchedulerException extends Exception {
 
-    /**
-     * Get planner URL
-     * @return Associated URL
-     */
-    URL remoteUrl();
+    public SchedulerException(final Throwable cause) {
 
-    /**
-     * Get planner score
-     * @return score
-     */
-    Score score();
+        super(cause);
+    }
 
-    /**
-     * Get planner solution
-     * @return New assignments
-     */
-    NodeAssignments solution();
+    public SchedulerException(final String message) {
 
-    /**
-     * Put new state into planner
-     * @param stateProvider Jenkins state
-     * @param assignments Current assignments
-     * @return updated or not
-     */
-    boolean queue(
-            final StateProvider stateProvider,
-            final NodeAssignments assignments
-    );
+        super(message);
+    }
 
-    /**
-     * Stop planner
-     * @return self
-     */
-    Planner stop();
+    public SchedulerException(final String message, final Throwable cause) {
+
+        super(message, cause);
+    }
 }
