@@ -45,6 +45,7 @@
     <powermock.version>1.4.12</powermock.version>
     <jersey.version>1.14</jersey.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <surefire.useFile>false</surefire.useFile>
   </properties>
 
   <dependencies>
