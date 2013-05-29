@@ -34,7 +34,6 @@ import javax.ws.rs.core.MediaType;
 import org.jenkinsci.plugins.externalscheduler.NodeAssignments;
 import org.jenkinsci.plugins.externalscheduler.Scheduler;
 import org.jenkinsci.plugins.externalscheduler.SchedulerException;
-import org.jenkinsci.plugins.externalscheduler.Score;
 import org.jenkinsci.plugins.externalscheduler.StateProvider;
 import org.jenkinsci.plugins.restservicescheduler.json.Translator;
 
@@ -132,7 +131,6 @@ public final class RestScheduler implements Scheduler {
 
     /**
      * @throws SchedulerException
-     * @see org.jenkinsci.plugins.externalscheduler.Scheduler#score()
      */
     public Score score() throws SchedulerException {
 

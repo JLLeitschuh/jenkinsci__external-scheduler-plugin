@@ -24,8 +24,8 @@
 package org.jenkinsci.plugins.restservicescheduler.json;
 
 import org.jenkinsci.plugins.externalscheduler.NodeAssignments;
-import org.jenkinsci.plugins.externalscheduler.Score;
 import org.jenkinsci.plugins.externalscheduler.StateProvider;
+import org.jenkinsci.plugins.restservicescheduler.Score;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

@@ -37,13 +37,6 @@ public interface Scheduler {
     URL remoteUrl();
 
     /**
-     * Get planner score
-     * @return score
-     * @throws SchedulerException
-     */
-    Score score() throws SchedulerException;
-
-    /**
      * Get planner solution
      * @return New assignments
      * @throws SchedulerException
