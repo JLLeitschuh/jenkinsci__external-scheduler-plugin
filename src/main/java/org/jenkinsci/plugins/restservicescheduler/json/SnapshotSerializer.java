@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.jenkinsci.plugins.externalscheduler.json;
+package org.jenkinsci.plugins.restservicescheduler.json;
 
 import hudson.model.Computer;
 import hudson.model.Label;
@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.jenkinsci.plugins.externalscheduler.json.Translator.Snapshot;
+import org.jenkinsci.plugins.restservicescheduler.json.Translator.Snapshot;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

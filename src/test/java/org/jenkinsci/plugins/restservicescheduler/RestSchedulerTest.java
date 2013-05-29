@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.jenkinsci.plugins.externalscheduler;
+package org.jenkinsci.plugins.restservicescheduler;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
@@ -33,6 +33,8 @@ import java.net.URL;
 
 import javax.ws.rs.core.MediaType;
 
+import org.jenkinsci.plugins.externalscheduler.SchedulerException;
+import org.jenkinsci.plugins.restservicescheduler.RestScheduler;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.jenkinsci.plugins.externalscheduler.json;
+package org.jenkinsci.plugins.restservicescheduler.json;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -48,7 +48,7 @@ import org.jenkinsci.plugins.externalscheduler.ItemMock;
 import org.jenkinsci.plugins.externalscheduler.NodeAssignments;
 import org.jenkinsci.plugins.externalscheduler.NodeMockFactory;
 import org.jenkinsci.plugins.externalscheduler.StateProviderMock;
-import org.jenkinsci.plugins.externalscheduler.json.Translator;
+import org.jenkinsci.plugins.restservicescheduler.json.Translator;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;

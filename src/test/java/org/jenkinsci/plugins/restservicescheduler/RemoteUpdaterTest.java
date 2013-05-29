@@ -21,14 +21,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.jenkinsci.plugins.externalscheduler;
+package org.jenkinsci.plugins.restservicescheduler;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.mock;
 
 import org.jenkinsci.plugins.externalscheduler.ExternalScheduler;
-import org.jenkinsci.plugins.externalscheduler.RemoteUpdater;
+import org.jenkinsci.plugins.restservicescheduler.RemoteUpdater;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

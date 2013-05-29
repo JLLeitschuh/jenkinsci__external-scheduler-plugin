@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.jenkinsci.plugins.externalscheduler;
+package org.jenkinsci.plugins.restservicescheduler;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -31,7 +31,12 @@ import java.util.regex.Pattern;
 
 import javax.ws.rs.core.MediaType;
 
-import org.jenkinsci.plugins.externalscheduler.json.Translator;
+import org.jenkinsci.plugins.externalscheduler.NodeAssignments;
+import org.jenkinsci.plugins.externalscheduler.Scheduler;
+import org.jenkinsci.plugins.externalscheduler.SchedulerException;
+import org.jenkinsci.plugins.externalscheduler.Score;
+import org.jenkinsci.plugins.externalscheduler.StateProvider;
+import org.jenkinsci.plugins.restservicescheduler.json.Translator;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;

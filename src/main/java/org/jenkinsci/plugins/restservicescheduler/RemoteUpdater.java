@@ -1,4 +1,6 @@
-package org.jenkinsci.plugins.externalscheduler;
+package org.jenkinsci.plugins.restservicescheduler;
+
+import org.jenkinsci.plugins.externalscheduler.ExternalScheduler;
 
 import hudson.model.PeriodicWork;
 

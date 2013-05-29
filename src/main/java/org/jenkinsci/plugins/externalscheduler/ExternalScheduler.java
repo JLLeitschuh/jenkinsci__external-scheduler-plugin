@@ -37,6 +37,8 @@ import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 
+import org.jenkinsci.plugins.restservicescheduler.RemoteUpdater;
+import org.jenkinsci.plugins.restservicescheduler.RestScheduler;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
