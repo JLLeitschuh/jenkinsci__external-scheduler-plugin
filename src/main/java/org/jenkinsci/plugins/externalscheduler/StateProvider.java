@@ -33,6 +33,4 @@ public interface StateProvider {
     List<Node> getNodes();
 
     List<Queue.BuildableItem> getQueue();
-
-    void updateQueue();
 }

@@ -23,53 +23,80 @@
  */
 package org.jenkinsci.plugins.restservicescheduler;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.mockito.Mockito.when;
+import hudson.model.Queue;
+import jenkins.model.Jenkins;
 
 import org.jenkinsci.plugins.externalscheduler.ExternalScheduler;
-import org.jenkinsci.plugins.restservicescheduler.RemoteUpdater;
+import org.jenkinsci.plugins.externalscheduler.NodeAssignments;
+import org.jenkinsci.plugins.externalscheduler.StateProvider;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.reflect.Whitebox;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(ExternalScheduler.class)
+@PrepareForTest({ExternalScheduler.class, RestScheduler.class, Jenkins.class})
 public class RemoteUpdaterTest {
 
-    private ExternalScheduler externalPlanner;
+    @Mock private ExternalScheduler externalScheduler;
+    @Mock private PluginScheduler pluginScheduler;
+    @Mock private RestScheduler restScheduler;
+    @Mock private Jenkins jenkins;
+    @Mock private Queue queue;
 
-    private RemoteUpdater updater;
+    private PluginScheduler.RemoteUpdater updater;
 
     @Before
     public void setUp() {
 
-        externalPlanner = mock(ExternalScheduler.class);
+        MockitoAnnotations.initMocks(this);
 
-        updater = new RemoteUpdater(externalPlanner);
+        updater = new PluginScheduler.RemoteUpdater(externalScheduler);
+
+        PowerMockito.mockStatic(Jenkins.class);
+        when(Jenkins.getInstance()).thenReturn(jenkins);
+        when(jenkins.getQueue()).thenReturn(queue);
     }
 
     @After
     public void tearDown() {
 
-        verifyNoMoreInteractions(externalPlanner);
+        verifyNoMoreInteractions(restScheduler);
     }
 
-    @Test(expected = AssertionError.class)
-    public void doNotInstantiateWithoutDescriptor() {
+    @Test(expected = IllegalArgumentException.class)
+    public void doNotInstantiateWithoutPlugin() {
 
-        new RemoteUpdater(null);
+        new PluginScheduler.RemoteUpdater(null);
     }
 
     @Test
     public void fetchAndSend() throws Exception {
 
+        final NodeAssignments currentSolution = NodeAssignments.builder().assign(0, "master").build();
+        final NodeAssignments newSolution = NodeAssignments.builder().assign(1, "slave").build();
+
+        when(externalScheduler.activeScheduler()).thenReturn(pluginScheduler);
+        Whitebox.setInternalState(PluginScheduler.class, "restScheduler", restScheduler);
+        when(externalScheduler.currentSolution()).thenReturn(currentSolution);
+
+        when(restScheduler.solution()).thenReturn(newSolution);
+
         updater.doRun();
 
-        verify(externalPlanner).sendQueue();
-        verify(externalPlanner).fetchSolution();
+        verify(restScheduler).solution();
+        verify(restScheduler).queue(any(StateProvider.class), same(currentSolution));
+        verify(queue).scheduleMaintenance();
     }
 }

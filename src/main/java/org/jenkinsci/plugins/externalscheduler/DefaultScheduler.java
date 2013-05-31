@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2012 Red Hat, Inc.
+ * Copyright (c) 2013 Red Hat, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,30 +23,34 @@
  */
 package org.jenkinsci.plugins.externalscheduler;
 
-import hudson.ExtensionPoint;
-import hudson.model.AbstractDescribableImpl;
-import net.sf.json.JSONObject;
+import hudson.Extension;
 
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
+ * Default scheduler implementation that delegates scheduling to Jenkins default scheduling mechanism
+ *
  * @author ogondza
  */
-public abstract class Scheduler extends AbstractDescribableImpl<Scheduler> implements ExtensionPoint {
+public class DefaultScheduler extends Scheduler {
 
-    /**
-     * Get planner solution
-     *
-     * @return New assignments or null in case Scheduler can not reliably deliver any solution.
-     */
-    public abstract NodeAssignments solution();
+    @DataBoundConstructor
+    public DefaultScheduler() {
+    }
 
-    public static abstract class Descriptor extends hudson.model.Descriptor<Scheduler> {
+    @Override
+    public NodeAssignments solution() {
+
+        return null;
+    }
+
+    @Extension
+    public static class Descriptor extends Scheduler.Descriptor {
 
         @Override
-        public Scheduler newInstance(final StaplerRequest req, final JSONObject formData) throws FormException {
+        public String getDisplayName() {
 
-            return req.bindJSON(clazz, formData);
+            return "Use default Jenkins scheduling mechanism";
         }
     }
 }

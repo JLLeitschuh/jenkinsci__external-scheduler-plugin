@@ -29,7 +29,6 @@ import hudson.model.Queue;
 import java.util.List;
 
 import org.apache.commons.lang.NotImplementedException;
-import org.jenkinsci.plugins.externalscheduler.StateProvider;
 
 public class StateProviderMock implements StateProvider {
 

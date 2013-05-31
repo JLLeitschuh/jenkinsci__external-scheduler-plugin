@@ -24,8 +24,11 @@
 package org.jenkinsci.plugins.externalscheduler;
 
 /**
- * Exception thrown in case scheduler has entered a state in which given operation
- * can not be performed. Scheduler can leave this state at any time in future.
+ * Exception thrown in case scheduler has entered a state in which it no longer
+ * deliver new assignments. Scheduler can leave this state at any time in future.
+ *
+ * This is used to signal that External Scheduler can use another scheduling
+ * mechanism until this scheduler start working again.
  *
  * @author ogondza
  */

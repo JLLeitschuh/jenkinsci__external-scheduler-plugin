@@ -31,11 +31,14 @@ import java.util.regex.Pattern;
 
 import javax.ws.rs.core.MediaType;
 
+import jenkins.model.Jenkins;
+
+import org.jenkinsci.plugins.externalscheduler.AbstractCiStateProvider;
 import org.jenkinsci.plugins.externalscheduler.NodeAssignments;
-import org.jenkinsci.plugins.externalscheduler.Scheduler;
 import org.jenkinsci.plugins.externalscheduler.SchedulerException;
 import org.jenkinsci.plugins.externalscheduler.StateProvider;
 import org.jenkinsci.plugins.restservicescheduler.json.Translator;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
@@ -47,7 +50,7 @@ import com.sun.jersey.api.client.WebResource;
  *
  * @author ogondza
  */
-public final class RestScheduler implements Scheduler {
+public final class RestScheduler {
 
     private final static Logger LOGGER = Logger.getLogger(
             RestScheduler.class.getName()
@@ -72,6 +75,7 @@ public final class RestScheduler implements Scheduler {
     private final String plannerName;
     private Status status = Status.STOPPED;
 
+    @DataBoundConstructor
     public RestScheduler(final URL serviceDestination) throws SchedulerException {
 
         this(serviceDestination, Client.create());
@@ -216,6 +220,11 @@ public final class RestScheduler implements Scheduler {
         return true;
     }
 
+    public boolean queue(final NodeAssignments assignments) throws SchedulerException {
+
+        return queue(new AbstractCiStateProvider(Jenkins.getInstance()), assignments);
+    }
+
     private void sendQueue(final WebResource.Builder resource, final String queueString) throws SchedulerException {
 
         try {
@@ -248,7 +257,7 @@ public final class RestScheduler implements Scheduler {
      * @throws SchedulerException
      * @see org.jenkinsci.plugins.externalscheduler.Scheduler#stop()
      */
-    public Scheduler stop() throws SchedulerException {
+    public RestScheduler stop() throws SchedulerException {
 
         if (!status.isRunning()) {
 

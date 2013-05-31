@@ -39,13 +39,13 @@ import java.util.List;
  */
 public class AbstractCiStateProvider implements StateProvider {
 
-    private final AbstractCIBase base;
+    private final AbstractCIBase jenkins;
 
-    /*package*/ AbstractCiStateProvider(final AbstractCIBase base) {
+    public AbstractCiStateProvider(final AbstractCIBase base) {
 
         if (base == null) throw new IllegalArgumentException("Base is null");
 
-        this.base = base;
+        this.jenkins = base;
     }
 
     /**
@@ -55,8 +55,8 @@ public class AbstractCiStateProvider implements StateProvider {
      */
     public List<Node> getNodes() {
 
-        final List<Node> nodeCandidates = new ArrayList<Node>(base.getNodes());
-        nodeCandidates.add(base);
+        final List<Node> nodeCandidates = new ArrayList<Node>(jenkins.getNodes());
+        nodeCandidates.add(jenkins);
 
         final List<Node> nodes = new ArrayList<Node>();
         for (final Node nodeCadidate: nodeCandidates) {
@@ -86,15 +86,7 @@ public class AbstractCiStateProvider implements StateProvider {
     public List<Queue.BuildableItem> getQueue() {
 
         return Collections.unmodifiableList(
-                base.getQueue().getBuildableItems()
+                jenkins.getQueue().getBuildableItems()
         );
-    }
-
-    /**
-     * Notify CIBase about the changes in the queue assignments
-     */
-    public void updateQueue() {
-
-        base.getQueue().scheduleMaintenance();
     }
 }
