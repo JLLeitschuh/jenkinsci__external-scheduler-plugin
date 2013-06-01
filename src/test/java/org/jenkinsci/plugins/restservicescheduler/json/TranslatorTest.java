@@ -48,13 +48,11 @@ import org.jenkinsci.plugins.externalscheduler.ItemMock;
 import org.jenkinsci.plugins.externalscheduler.NodeAssignments;
 import org.jenkinsci.plugins.externalscheduler.NodeMockFactory;
 import org.jenkinsci.plugins.externalscheduler.StateProviderMock;
-import org.jenkinsci.plugins.restservicescheduler.json.Translator;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
@@ -65,8 +63,6 @@ import com.google.gson.JsonParser;
 public class TranslatorTest {
 
     private static final Translator SERIALIZER = new Translator();
-
-    private static final Gson gson = new Gson();
 
     private final NodeMockFactory nodeFactory = new NodeMockFactory();
 

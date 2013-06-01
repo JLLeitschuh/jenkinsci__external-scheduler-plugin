@@ -37,14 +37,13 @@ import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.externalscheduler.ExternalScheduler;
 import org.jenkinsci.plugins.externalscheduler.NodeAssignments;
 import org.jenkinsci.plugins.externalscheduler.Scheduler;
-import org.jenkinsci.plugins.externalscheduler.StateProvider;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 public class PluginScheduler extends Scheduler {
 
     private final static Logger LOGGER = Logger.getLogger(
-            RestScheduler.class.getName()
+            PluginScheduler.class.getName()
     );
 
     private static RemoteUpdater updater;
@@ -150,7 +149,6 @@ public class PluginScheduler extends Scheduler {
 
         private final ExternalScheduler plugin;
 
-        private StateProvider stateProvider;
         private NodeAssignments currentAssignments;
 
         public RemoteUpdater(final ExternalScheduler plugin) {

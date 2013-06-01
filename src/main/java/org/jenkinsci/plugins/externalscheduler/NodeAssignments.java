@@ -66,7 +66,7 @@ public final class NodeAssignments {
         }
     }
 
-    public NodeAssignments(final NodeAssignments.Builder builder) {
+    private NodeAssignments(final NodeAssignments.Builder builder) {
 
         this.assignments = Collections.unmodifiableMap(builder.assignments);
     }

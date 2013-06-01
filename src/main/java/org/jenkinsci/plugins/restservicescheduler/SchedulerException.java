@@ -24,12 +24,6 @@
 package org.jenkinsci.plugins.restservicescheduler;
 
 /**
- * Exception thrown in case scheduler has entered a state in which it no longer
- * deliver new assignments. Scheduler can leave this state at any time in future.
- *
- * This is used to signal that External Scheduler can use another scheduling
- * mechanism until this scheduler start working again.
- *
  * @author ogondza
  */
 public class SchedulerException extends Exception {

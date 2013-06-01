@@ -41,7 +41,7 @@ public class AbstractCiStateProvider implements StateProvider {
 
     private final AbstractCIBase jenkins;
 
-    public AbstractCiStateProvider(final AbstractCIBase base) {
+    /*package*/ AbstractCiStateProvider(final AbstractCIBase base) {
 
         if (base == null) throw new IllegalArgumentException("Base is null");
 
@@ -81,7 +81,7 @@ public class AbstractCiStateProvider implements StateProvider {
     /**
      * Get buildable items to schedule
      *
-     * @return List of queued item to be scheduled. Never null
+     * @return List of queued items to be scheduled. Never null
      */
     public List<Queue.BuildableItem> getQueue() {
 
