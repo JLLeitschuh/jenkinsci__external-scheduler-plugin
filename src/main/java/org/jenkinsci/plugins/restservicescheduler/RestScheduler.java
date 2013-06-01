@@ -31,9 +31,6 @@ import java.util.regex.Pattern;
 
 import javax.ws.rs.core.MediaType;
 
-import jenkins.model.Jenkins;
-
-import org.jenkinsci.plugins.externalscheduler.AbstractCiStateProvider;
 import org.jenkinsci.plugins.externalscheduler.NodeAssignments;
 import org.jenkinsci.plugins.externalscheduler.StateProvider;
 import org.jenkinsci.plugins.restservicescheduler.json.Translator;
@@ -217,11 +214,6 @@ public final class RestScheduler {
         }
 
         return true;
-    }
-
-    public boolean queue(final NodeAssignments assignments) throws SchedulerException {
-
-        return queue(new AbstractCiStateProvider(Jenkins.getInstance()), assignments);
     }
 
     private void sendQueue(final WebResource.Builder resource, final String queueString) throws SchedulerException {

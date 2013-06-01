@@ -25,6 +25,7 @@ package org.jenkinsci.plugins.externalscheduler;
 
 import hudson.ExtensionPoint;
 import hudson.model.AbstractDescribableImpl;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 
 import org.kohsuke.stapler.StaplerRequest;
@@ -34,12 +35,24 @@ import org.kohsuke.stapler.StaplerRequest;
  */
 public abstract class Scheduler extends AbstractDescribableImpl<Scheduler> implements ExtensionPoint {
 
+    private static StateProvider stateProvider;
+
     /**
      * Get planner solution
      *
      * @return New assignments or null in case Scheduler can not reliably deliver any solution.
      */
     public abstract NodeAssignments solution();
+
+    protected static StateProvider stateProvider() {
+
+        if (stateProvider == null) {
+
+            stateProvider = new AbstractCiStateProvider(Jenkins.getInstance());
+        }
+
+        return stateProvider;
+    }
 
     public static abstract class Descriptor extends hudson.model.Descriptor<Scheduler> {
 

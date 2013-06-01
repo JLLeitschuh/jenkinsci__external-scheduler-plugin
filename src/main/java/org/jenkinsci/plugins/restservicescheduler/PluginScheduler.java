@@ -34,7 +34,6 @@ import java.util.logging.Logger;
 
 import jenkins.model.Jenkins;
 
-import org.jenkinsci.plugins.externalscheduler.AbstractCiStateProvider;
 import org.jenkinsci.plugins.externalscheduler.ExternalScheduler;
 import org.jenkinsci.plugins.externalscheduler.NodeAssignments;
 import org.jenkinsci.plugins.externalscheduler.Scheduler;
@@ -89,7 +88,7 @@ public class PluginScheduler extends Scheduler {
         try {
 
             final RestScheduler restScheduler = getRestScheduler(url);
-            restScheduler.queue(NodeAssignments.empty());
+            restScheduler.queue(stateProvider(), NodeAssignments.empty());
             return restScheduler;
         } catch (MalformedURLException ex) {
 
@@ -226,16 +225,6 @@ public class PluginScheduler extends Scheduler {
         private boolean sendQueue(final PluginScheduler scheduler) throws SchedulerException {
 
             return PluginScheduler.restScheduler.queue(stateProvider(), plugin.currentSolution());
-        }
-
-        private StateProvider stateProvider() {
-
-            if (stateProvider == null) {
-
-                stateProvider = new AbstractCiStateProvider(Jenkins.getInstance());
-            }
-
-            return stateProvider;
         }
     }
 }
