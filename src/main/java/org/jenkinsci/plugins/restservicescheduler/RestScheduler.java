@@ -35,7 +35,6 @@ import jenkins.model.Jenkins;
 
 import org.jenkinsci.plugins.externalscheduler.AbstractCiStateProvider;
 import org.jenkinsci.plugins.externalscheduler.NodeAssignments;
-import org.jenkinsci.plugins.externalscheduler.SchedulerException;
 import org.jenkinsci.plugins.externalscheduler.StateProvider;
 import org.jenkinsci.plugins.restservicescheduler.json.Translator;
 import org.kohsuke.stapler.DataBoundConstructor;

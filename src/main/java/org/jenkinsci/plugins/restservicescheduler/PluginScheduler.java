@@ -38,7 +38,6 @@ import org.jenkinsci.plugins.externalscheduler.AbstractCiStateProvider;
 import org.jenkinsci.plugins.externalscheduler.ExternalScheduler;
 import org.jenkinsci.plugins.externalscheduler.NodeAssignments;
 import org.jenkinsci.plugins.externalscheduler.Scheduler;
-import org.jenkinsci.plugins.externalscheduler.SchedulerException;
 import org.jenkinsci.plugins.externalscheduler.StateProvider;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;

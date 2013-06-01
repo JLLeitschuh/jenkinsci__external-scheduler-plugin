@@ -33,7 +33,6 @@ import java.net.URL;
 
 import javax.ws.rs.core.MediaType;
 
-import org.jenkinsci.plugins.externalscheduler.SchedulerException;
 import org.jenkinsci.plugins.restservicescheduler.RestScheduler;
 import org.junit.Before;
 import org.junit.Test;
