@@ -19,9 +19,10 @@
     <developer>
       <id>olivergondza</id>
       <name>Oliver Gondža</name>
-      <email>ogondza@redhat.org</email>
+      <email>ogondza@gmail.com</email>
     </developer>
   </developers>
+
   <scm>
     <connection>scm:git:git://github.com/jenkinsci/external-scheduler-plugin.git</connection>
     <developerConnection>scm:git:git@github.com:jenkinsci/external-scheduler-plugin.git</developerConnection>
@@ -92,8 +93,6 @@
             <artifactId>maven-jar-plugin</artifactId>
             <executions>
               <execution>
-                <id>test-jar</id>
-                <phase>package</phase>
                 <goals>
                   <goal>test-jar</goal>
                 </goals>
