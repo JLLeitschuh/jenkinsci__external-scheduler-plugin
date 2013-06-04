@@ -23,6 +23,7 @@
  */
 package org.jenkinsci.plugins.externalscheduler;
 
+import hudson.model.Node;
 import hudson.model.Queue;
 
 import java.util.Collections;
@@ -57,6 +58,12 @@ public final class NodeAssignments {
         public NodeAssignments.Builder assign(final int id, final String nodeName) {
 
             assignments.put(id, nodeName);
+            return this;
+        }
+
+        public NodeAssignments.Builder assign(final Queue.BuildableItem item, final Node node) {
+
+            assignments.put(item.id, node.getSelfLabel().toString());
             return this;
         }
 
